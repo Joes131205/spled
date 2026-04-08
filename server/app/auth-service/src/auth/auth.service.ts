@@ -9,4 +9,8 @@ export class AuthService {
   async login(body: any) {
     console.log(body);
   }
+
+  async getMe() {
+    console.log('Get me');
+  }
 }

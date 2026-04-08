@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { EvidencesModule } from './evidences/evidences.module';
+import { GhostBusterModule } from './ghost-buster/ghost-buster.module';
 
 @Module({
-  imports: [EvidencesModule],
+  imports: [GhostBusterModule],
   controllers: [],
   providers: [],
 })

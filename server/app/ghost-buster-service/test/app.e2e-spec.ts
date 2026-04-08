@@ -4,7 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 
-describe('EvidenceService (e2e)', () => {
+describe('GhostBusterService (e2e)', () => {
   let app: INestApplication<App>;
 
   beforeEach(async () => {
@@ -16,10 +16,14 @@ describe('EvidenceService (e2e)', () => {
     await app.init();
   });
 
-  it('/evidence/:taskId (GET)', () => {
+  it('/ghost-buster/:projectId (GET)', () => {
     return request(app.getHttpServer())
-      .get('/evidence/task-1')
+      .get('/ghost-buster/default-project')
       .expect(200)
-      .expect([]);
+      .expect({
+        projectId: 'default-project',
+        inactivityThreshold: 'H-3',
+        flaggedMembers: ['member-a', 'member-b'],
+      });
   });
 });
