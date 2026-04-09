@@ -20,6 +20,12 @@ enum TaskWeight {
   HARD
 }
 
+model Project {
+  id          String     @id @default(uuid())
+  name          String     @id @default(uuid())
+
+}
+
 model Task {
   id          String     @id @default(uuid())
   projectId   String
