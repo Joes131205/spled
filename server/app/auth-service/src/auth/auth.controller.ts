@@ -1,25 +1,27 @@
-import { Body, Controller, Get, Post, UseMiddleware } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { createUserDto } from '../../utils/dto/createUserDto';
 import { loginUserDto } from '../../utils/dto/loginUserDto';
-import { authMiddleware } from '@spled/shared';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
   @Post('register')
-  async register(@Body() body: createUserDto) {
-    return await this.authService.register(body);
+  register(@Body() body: createUserDto) {
+    return this.authService.register(body);
   }
 
   @Post('login')
-  async login(@Body() body: loginUserDto) {
-    return await this.authService.login(body);
+  login(@Body() body: loginUserDto) {
+    return this.authService.login(body);
   }
 
   @Get('me')
-  @UseMiddleware(authMiddleware)
-  async getMe() {
-    return await this.authService.getMe();
+  @UseGuards(JwtAuthGuard)
+  getMe(@Req() req: Request & { user: { sub: string } }) {
+    return this.authService.getMe(req.user);
   }
 }
