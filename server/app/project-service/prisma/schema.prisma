@@ -22,7 +22,7 @@ enum TaskWeight {
 
 model Project {
   id          String     @id @default(uuid())
-  name          String     @id @default(uuid())
+  name        String     @default(uuid())
 
 }
 

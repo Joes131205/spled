@@ -67,7 +67,15 @@ export class AuthService {
     };
   }
 
-  getMe(user: { sub: string }) {
+  async getMe(currentUser: { sub: string }) {
+    const user = await prisma.user.findUnique({
+      where: { id: currentUser.sub },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid user');
+    }
+
     return user;
   }
 }
