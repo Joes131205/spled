@@ -5,16 +5,24 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
-import { createUserDto } from '../../utils/dto/createUserDto';
-import { loginUserDto } from '../../utils/dto/loginUserDto';
+import { createUserDto } from '../utils/dto/createUserDto';
+import { loginUserDto } from '../utils/dto/loginUserDto';
 import { prisma } from '../db/prisma.client';
+
+const db = prisma;
 
 @Injectable()
 export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
 
+  private sanitizeUser<T extends { password: string }>(user: T) {
+    const { password, ...safeUser } = user;
+    void password;
+    return safeUser;
+  }
+
   async register(body: createUserDto) {
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await db.user.findFirst({
       where: {
         OR: [{ email: body.email }, { username: body.username }],
       },
@@ -25,7 +33,7 @@ export class AuthService {
     }
 
     const password = await bcrypt.hash(body.password, 10);
-    const user = await prisma.user.create({
+    const user = await db.user.create({
       data: {
         ...body,
         password,
@@ -37,13 +45,13 @@ export class AuthService {
     });
 
     return {
-      user,
+      user: this.sanitizeUser(user),
       accessToken,
     };
   }
 
   async login(body: loginUserDto) {
-    const user = await prisma.user.findUnique({
+    const user = await db.user.findUnique({
       where: { email: body.email },
     });
 
@@ -62,20 +70,20 @@ export class AuthService {
     });
 
     return {
-      user,
+      user: this.sanitizeUser(user),
       accessToken,
     };
   }
 
-  async getMe(currentUser: { sub: string }) {
-    const user = await prisma.user.findUnique({
-      where: { id: currentUser.sub },
+  async getMe(userId: string) {
+    const user = await db.user.findUnique({
+      where: { id: userId },
     });
 
     if (!user) {
       throw new UnauthorizedException('Invalid user');
     }
 
-    return user;
+    return this.sanitizeUser(user);
   }
 }

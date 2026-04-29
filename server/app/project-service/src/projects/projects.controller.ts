@@ -1,24 +1,44 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ProjectsService } from './projects.service';
-import { createProjectDto } from '../../utils/dto/createProjectDto';
+import { createProjectDto } from '../utils/dto/createProjectDto';
 
 @Controller('projects')
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post('')
-  createProject(@Body() body: createProjectDto) {
-    this.projectsService.createProject(body);
+  async createProject(@Body() body: createProjectDto) {
+    await this.projectsService.createProject(body);
   }
 
-  @Get(':id')
-  getProjectById(@Param('id') id: string) {
-    this.projectsService.getProjectById(id);
+  @Get(':projectId')
+  async getProjectById(@Param('projectId') id: string) {
+    await this.projectsService.getProjectById(id);
   }
 
-  @Post('join/:id')
-  joinToProject(@Param('id') id: string) {}
+  @Patch(':projectId')
+  async updateProject(@Param('id') projectId: string) {}
 
-  @Delete(':id/:memberId')
-  kickMember(@Param('id') id: string, @Param('memberId') memberId: string) {}
+  @Delete(':projectId')
+  async deleteProject(@Param('id') projectId: string) {}
+
+  @Post(':projectId/join')
+  async joinToProject(@Param('projectId') projectId: string) {}
+
+  @Delete(':projectId/members/:memberId')
+  async kickMember(
+    @Param('id') projectId: string,
+    @Param('memberId') memberId: string,
+  ) {}
+
+  @Get(':projectId/members')
+  getMembers(@Param('id') projectId: string) {}
 }

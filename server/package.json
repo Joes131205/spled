@@ -1,19 +1,20 @@
 {
-  "name": "spled-server",
-  "private": true,
-  "workspaces": [
-    "app/*"
-  ],
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run start:dev --parallel",
-    "start": "turbo run start --parallel",
-    "lint": "turbo run lint",
-    "test": "turbo run test",
-    "test:e2e": "turbo run test:e2e",
-    "format": "turbo run format"
-  },
-  "devDependencies": {
-    "turbo": "^2.5.8"
-  }
+    "name": "spled-server",
+    "packageManager": "bun@1.1.0",
+    "private": true,
+    "workspaces": [
+        "app/*"
+    ],
+    "scripts": {
+        "build": "turbo run build",
+        "dev": "turbo run start:dev --parallel",
+        "start": "turbo run start --parallel",
+        "lint": "turbo run lint",
+        "test": "turbo run test",
+        "test:e2e": "turbo run test:e2e",
+        "format": "turbo run format"
+    },
+    "devDependencies": {
+        "turbo": "^2.5.8"
+    }
 }

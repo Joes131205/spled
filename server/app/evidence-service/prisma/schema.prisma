@@ -15,11 +15,19 @@ datasource db {
 }
 
 model Evidence {
-  id           String   @id @default(uuid())
-  taskId       String   @unique
-  uploadedBy   String   
-  fileUrl      String
-  description  String?
-  isVerified   Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  id                String   @id @default(uuid())
+  taskId            String
+  uploadedBy        String
+  fileUrl           String
+  description       String?
+  isVerified        Boolean  @default(false)
+  verifiedBy        String?
+  verificationNotes String?
+  verificationDate  DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([taskId])
+  @@index([uploadedBy])
+  @@index([verifiedBy])
 }

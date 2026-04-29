@@ -22,13 +22,23 @@ enum Role {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  role      Role     @default(MEMBER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(uuid())
+  username          String   @unique
+  email             String   @unique
+  password          String
+  role              Role     @default(MEMBER)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  viewableProjectId String? 
+  // Lecturer access tracking (read-only view token)
+  lecturerAccessCode String? @unique
+  lecturerAccessExpiry DateTime?
+}
+
+model LecturerAccessToken {
+  id          String   @id @default(uuid())
+  projectId   String   @unique
+  token       String   @unique
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
 }
