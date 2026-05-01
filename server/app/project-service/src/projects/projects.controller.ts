@@ -15,30 +15,22 @@ export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post('')
-  async createProject(@Body() body: createProjectDto) {
-    await this.projectsService.createProject(body);
+  createProject(@Body() body: createProjectDto) {
+    return this.projectsService.createProject(body);
   }
 
   @Get(':projectId')
-  async getProjectById(@Param('projectId') id: string) {
-    await this.projectsService.getProjectById(id);
+  getProjectById(@Param('projectId') id: string) {
+    return this.projectsService.getProjectById(id);
   }
 
   @Patch(':projectId')
-  async updateProject(@Param('id') projectId: string) {}
+  updateProject(@Param('id') projectId: string) {
+    return this.projectsService.updateProject(projectId);
+  }
 
   @Delete(':projectId')
-  async deleteProject(@Param('id') projectId: string) {}
-
-  @Post(':projectId/join')
-  async joinToProject(@Param('projectId') projectId: string) {}
-
-  @Delete(':projectId/members/:memberId')
-  async kickMember(
-    @Param('id') projectId: string,
-    @Param('memberId') memberId: string,
-  ) {}
-
-  @Get(':projectId/members')
-  getMembers(@Param('id') projectId: string) {}
+  deleteProject(@Param('id') projectId: string) {
+    return this.projectsService.deleteProject(projectId);
+  }
 }

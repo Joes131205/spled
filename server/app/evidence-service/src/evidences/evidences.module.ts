@@ -5,5 +5,6 @@ import { EvidencesController } from './evidences.controller';
 @Module({
   controllers: [EvidencesController],
   providers: [EvidencesService],
+  exports: [EvidencesService],
 })
 export class EvidencesModule {}

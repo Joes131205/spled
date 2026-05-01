@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { EvidencesService } from './evidences.service';
-
+import { CreateEvidenceDto } from '../utils/dto/createEvidenceDto';
+import { VerifyEvidenceDto } from '../utils/dto/verifyEvidenceDto';
 @Controller()
 export class EvidencesController {
   constructor(private readonly evidencesService: EvidencesService) {}
@@ -8,7 +9,7 @@ export class EvidencesController {
   @Post('evidence/:taskId')
   uploadEvidence(
     @Param('taskId') taskId: string,
-    @Body() body: { url?: string; screenshot?: string; submittedBy?: string },
+    @Body() body: CreateEvidenceDto,
   ) {
     return this.evidencesService.uploadEvidence(taskId, body);
   }
@@ -18,21 +19,11 @@ export class EvidencesController {
     return this.evidencesService.getEvidenceByTask(taskId);
   }
 
-  @Post('evidence/:id/verify')
+  @Put('evidence/:evidenceId/verify')
   verifyEvidence(
-    @Param('id') evidenceId: string,
-    @Body() body: { reviewerId?: string; isValid?: boolean; notes?: string },
+    @Param('evidenceId') evidenceId: string,
+    @Body() verifyEvidence: VerifyEvidenceDto,
   ) {
-    return this.evidencesService.verifyEvidence(evidenceId, body);
-  }
-
-  @Get('analytics/:projectId')
-  getProjectAnalytics(@Param('projectId') projectId: string) {
-    return this.evidencesService.getProjectAnalytics(projectId);
-  }
-
-  @Get('analytics/public/:token')
-  getPublicAnalytics(@Param('token') token: string) {
-    return this.evidencesService.getPublicAnalytics(token);
+    return this.evidencesService.verifyEvidence(evidenceId, verifyEvidence);
   }
 }
