@@ -15,6 +15,94 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum TaskWeight {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+model Project {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  leaderId      String
+  startDate     DateTime @default(now())
+  endDate       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  members       ProjectMember[]
+  tasks         Task[]
+  logReasons    LogReason[]
+  invites       ProjectInvite[]
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model ProjectInvite {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Task {
+  id          String      @id @default(uuid())
+  projectId   String
+  name        String
+  description String?
+  weight      TaskWeight  @default(MEDIUM)
+  status      TaskStatus  @default(PENDING)
+  progress    Float       @default(0)
+  deadline    DateTime?
+  assignedTo  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  evidences   Evidence[]
+
+  @@index([projectId])
+  @@index([assignedTo])
+}
+
+model LogReason {
+  id        String   @id @default(uuid())
+  projectId String
+  memberId  String
+  reason    String
+  kickedAt  DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([memberId])
+}
+
 enum Role {
   LEADER
   MEMBER
@@ -22,23 +110,39 @@ enum Role {
 }
 
 model User {
-  id                String   @id @default(uuid())
-  username          String   @unique
-  email             String   @unique
-  password          String
-  role              Role     @default(MEMBER)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  // Lecturer access tracking (read-only view token)
-  lecturerAccessCode String? @unique
+  id                   String    @id @default(uuid())
+  username             String    @unique
+  email                String    @unique
+  password             String
+  role                 Role      @default(MEMBER)
+  displayName          String?
+  avatarUrl            String?  @db.Text
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  lecturerAccessCode   String?   @unique
   lecturerAccessExpiry DateTime?
 }
 
 model LecturerAccessToken {
-  id          String   @id @default(uuid())
-  projectId   String   @unique
-  token       String   @unique
-  createdAt   DateTime @default(now())
-  expiresAt   DateTime
+  id        String   @id @default(uuid())
+  projectId String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+model Evidence {
+  id                  String    @id @default(uuid())
+  taskId              String
+  uploadedBy          String
+  fileUrl             String
+  description         String?
+  isVerified          Boolean   @default(false)
+  verifiedBy          String?
+  verificationNotes   String?
+  verificationDate    DateTime?
+  createdAt           DateTime  @default(now())
+
+  task                Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
 }

@@ -12,6 +12,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 enum TaskWeight {
@@ -39,6 +40,7 @@ model Project {
   members       ProjectMember[]
   tasks         Task[]
   logReasons    LogReason[]
+  invites       ProjectInvite[]
 }
 
 model ProjectMember {
@@ -46,6 +48,20 @@ model ProjectMember {
   projectId String
   userId    String
   joinedAt  DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model ProjectInvite {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
 
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -68,7 +84,7 @@ model Task {
   updatedAt   DateTime    @updatedAt
 
   project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  evidence    Evidence[]
+  evidences   Evidence[]
 
   @@index([projectId])
   @@index([assignedTo])
@@ -85,4 +101,48 @@ model LogReason {
 
   @@index([projectId])
   @@index([memberId])
+}
+
+enum Role {
+  LEADER
+  MEMBER
+  LECTURER
+}
+
+model User {
+  id                   String    @id @default(uuid())
+  username             String    @unique
+  email                String    @unique
+  password             String
+  role                 Role      @default(MEMBER)
+  displayName          String?
+  avatarUrl            String?  @db.Text
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  lecturerAccessCode   String?   @unique
+  lecturerAccessExpiry DateTime?
+}
+
+model LecturerAccessToken {
+  id        String   @id @default(uuid())
+  projectId String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+model Evidence {
+  id                  String    @id @default(uuid())
+  taskId              String
+  uploadedBy          String
+  fileUrl             String
+  description         String?
+  isVerified          Boolean   @default(false)
+  verifiedBy          String?
+  verificationNotes   String?
+  verificationDate    DateTime?
+  createdAt           DateTime  @default(now())
+
+  task                Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
 }
