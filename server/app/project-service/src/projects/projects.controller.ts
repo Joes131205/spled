@@ -25,12 +25,12 @@ export class ProjectsController {
   }
 
   @Patch(':projectId')
-  updateProject(@Param('id') projectId: string) {
-    return this.projectsService.updateProject(projectId);
+  updateProject(@Param('projectId') projectId: string, @Body() body: unknown) {
+    return this.projectsService.updateProject(projectId, body);
   }
 
   @Delete(':projectId')
-  deleteProject(@Param('id') projectId: string) {
+  deleteProject(@Param('projectId') projectId: string) {
     return this.projectsService.deleteProject(projectId);
   }
 }

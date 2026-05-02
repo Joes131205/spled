@@ -17,6 +17,10 @@ export class createTaskDto {
   @IsNotEmpty()
   name!: string;
 
+  @IsString()
+  @IsNotEmpty()
+  projectId!: string;
+
   @IsOptional()
   @IsString()
   description?: string;

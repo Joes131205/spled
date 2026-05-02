@@ -13,6 +13,11 @@ export class createProjectDto {
   name!: string;
 
   @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  leaderId!: string;
+
+  @ApiProperty()
   @IsOptional()
   @IsString()
   description?: string;

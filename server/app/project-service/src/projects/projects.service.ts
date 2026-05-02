@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { createProjectDto } from '../utils/dto/createProjectDto';
 import { prisma } from '../db/prisma.client';
 
@@ -11,7 +7,12 @@ const db = prisma;
 export class ProjectsService {
   async createProject(body: createProjectDto) {
     const project = await db.project.create({
-      data: body,
+      data: {
+        name: body.name,
+        leaderId: body.leaderId,
+        description: body.description,
+        endDate: body.endDate ? new Date(body.endDate) : undefined,
+      },
     });
     return project;
   }
@@ -25,7 +26,7 @@ export class ProjectsService {
     return project;
   }
 
-  async updateProject(projectId: string, body: unknown) {
+  async updateProject(projectId: string, body: any) {
     const project = await db.project.findUnique({
       where: { id: projectId },
     });
@@ -35,7 +36,7 @@ export class ProjectsService {
     return db.project.update({ data: body, where: { id: projectId } });
   }
 
-  deleteProject(projectId: string) {
+  async deleteProject(projectId: string) {
     const project = await db.project.findUnique({
       where: { id: projectId },
     });
