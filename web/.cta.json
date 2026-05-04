@@ -1,5 +1,5 @@
 {
-  "projectName": "web",
+  "projectName": "web-temp",
   "mode": "file-router",
   "typescript": true,
   "packageManager": "bun",
@@ -7,12 +7,15 @@
   "tailwind": true,
   "addOnOptions": {},
   "envVarValues": {},
-  "git": true,
+  "git": false,
+  "install": true,
   "routerOnly": false,
   "version": 1,
   "framework": "react",
   "chosenAddOns": [
     "biome",
-    "t3env"
+    "netlify",
+    "t3env",
+    "tanstack-query"
   ]
 }

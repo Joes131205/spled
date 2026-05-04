@@ -1,11 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/")({ component: App });
+export const Route = createFileRoute("/")({
+    component: Home,
+    beforeLoad: async () => {
+        throw redirect({
+            to: "/login",
+        });
+    },
+});
 
-function App() {
+function Home() {
     return (
-        <div>
-            <p>Hello World</p>
+        <div className="p-8">
+            <h1 className="text-4xl font-bold">Welcome to TanStack Start</h1>
+            <p className="mt-4 text-lg">
+                Edit <code>src/routes/index.tsx</code> to get started.
+            </p>
         </div>
     );
 }
