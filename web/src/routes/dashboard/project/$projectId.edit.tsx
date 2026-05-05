@@ -1,13 +1,14 @@
 import { projectApi } from "#/utils/api";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 
-export const Route = createFileRoute('/dashboard/project/create')({
+export const Route = createFileRoute("/dashboard/project/$projectId/edit")({
   component: RouteComponent,
-})
+});
 
 function RouteComponent() {
+  const { projectId } = useParams({ from: "/dashboard/project/$projectId/edit" });
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
@@ -15,7 +16,26 @@ function RouteComponent() {
     endDate: "",
   });
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await projectApi.get(`/projects/${projectId}`);
+        setFormData({
+          name: res.data.name || "",
+          description: res.data.description || "",
+          endDate: res.data.endDate ? new Date(res.data.endDate).toISOString().split('T')[0] : "",
+        });
+      } catch (e) {
+        setError("Failed to load project");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [projectId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -33,24 +53,23 @@ function RouteComponent() {
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
     try {
-      const leaderId = localStorage.getItem("userId");
-      const res = await projectApi.post("/projects", {
-        ...formData,
-        leaderId: leaderId,
-      });
+      await projectApi.patch(`/projects/${projectId}`, formData);
       navigate({ to: "/dashboard" });
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create project");
+      setError(err.response?.data?.message || "Failed to update project");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
+  if (loading) {
+    return <div className="text-center py-12">Loading...</div>;
+  }
+
   return (
     <div>
-      {/* Back Button */}
       <button
         onClick={() => navigate({ to: "/dashboard" })}
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-medium"
@@ -59,9 +78,8 @@ function RouteComponent() {
         Back to Projects
       </button>
 
-      {/* Form */}
       <div className="max-w-2xl bg-white rounded-lg shadow border border-gray-200 p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Project</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Edit Project</h1>
 
         {error && (
           <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -80,7 +98,6 @@ function RouteComponent() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="e.g., Website Redesign"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             />
           </div>
@@ -93,7 +110,6 @@ function RouteComponent() {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Describe the project goals and scope"
               rows={4}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
             />
@@ -115,10 +131,10 @@ function RouteComponent() {
           <div className="flex gap-4 pt-6">
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-colors"
             >
-              {loading ? "Creating..." : "Create Project"}
+              {submitting ? "Saving..." : "Save Changes"}
             </button>
             <button
               type="button"
@@ -131,5 +147,5 @@ function RouteComponent() {
         </form>
       </div>
     </div>
-  )
+  );
 }

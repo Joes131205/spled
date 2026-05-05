@@ -1,9 +1,19 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { createTaskDto } from '../utils/dto/createTaskDto';
 import { updateStatusDto } from '../utils/dto/updateStatusDto';
 import { updateWeightDto } from '../utils/dto/updateWeightDto';
 import { assignTaskDto } from '../utils/dto/assignTaskDto';
+import { unassignTaskDto } from '../utils/dto/unassignTaskDto';
+import { JwtAuthGuard } from '../utils/guards/jwt.guard';
 
 @Controller('tasks')
 export class TasksController {
@@ -37,5 +47,11 @@ export class TasksController {
   @Put(':taskId/assign')
   assignTask(@Param('taskId') taskId: string, @Body() body: assignTaskDto) {
     return this.tasksService.assignTask(taskId, body);
+  }
+
+  @Put(':taskId/unassign')
+  @UseGuards(JwtAuthGuard)
+  unassignTask(@Param('taskId') taskId: string, @Body() body: unassignTaskDto) {
+    return this.tasksService.unassignTask(taskId, body);
   }
 }

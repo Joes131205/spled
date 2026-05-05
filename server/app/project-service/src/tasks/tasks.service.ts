@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { createTaskDto } from '../utils/dto/createTaskDto';
 import { prisma } from '../db/prisma.client';
 import { updateStatusDto } from '../utils/dto/updateStatusDto';
 import { updateWeightDto } from '../utils/dto/updateWeightDto';
 import { assignTaskDto } from '../utils/dto/assignTaskDto';
+import { unassignTaskDto } from '../utils/dto/unassignTaskDto';
 
 const db = prisma;
 @Injectable()
@@ -74,6 +79,32 @@ export class TasksService {
         memberId: body.memberId,
         assignedBy: body.assignedBy ?? null,
         reason: body.reason ?? null,
+      },
+    });
+
+    return updated;
+  }
+
+  async unassignTask(taskId: string, body: unassignTaskDto) {
+    const task = await this.getTaskById(taskId);
+
+    if (!task.assignedTo) {
+      throw new BadRequestException('Task is not currently assigned');
+    }
+
+    const previousMember = task.assignedTo;
+
+    const updated = await db.task.update({
+      where: { id: taskId },
+      data: { assignedTo: null },
+    });
+
+    await db.taskAssignment.create({
+      data: {
+        taskId: taskId,
+        memberId: previousMember,
+        assignedBy: body.assignedBy ?? null,
+        reason: body.reason ?? 'unassigned',
       },
     });
 

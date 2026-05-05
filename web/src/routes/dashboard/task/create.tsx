@@ -1,10 +1,7 @@
 import { projectApi } from "#/utils/api";
-import {
-    createFileRoute,
-    useLocation,
-    useNavigate,
-} from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useState } from "react";
+import { AlertCircle, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/task/create")({
     component: RouteComponent,
