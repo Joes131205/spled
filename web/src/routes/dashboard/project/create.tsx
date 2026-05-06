@@ -1,135 +1,126 @@
-import { projectApi } from "#/utils/api";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 
-export const Route = createFileRoute('/dashboard/project/create')({
-  component: RouteComponent,
-})
+export const Route = createFileRoute("/dashboard/project/create")({
+    component: RouteComponent,
+});
 
 function RouteComponent() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    endDate: "",
-  });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+    const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        endDate: "",
     });
-  };
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+        });
+    };
 
-    if (!formData.name.trim()) {
-      setError("Project name is required");
-      return;
-    }
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
 
-    setLoading(true);
-    try {
-      const leaderId = localStorage.getItem("userId");
-      const res = await projectApi.post("/projects", {
-        ...formData,
-        leaderId: leaderId,
-      });
-      navigate({ to: "/dashboard" });
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create project");
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (!formData.name.trim()) {
+            setError("Project name is required");
+            return;
+        }
 
-  return (
-    <div>
-      {/* Back Button */}
-      <button
-        onClick={() => navigate({ to: "/dashboard" })}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-medium"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Back to Projects
-      </button>
+        setLoading(true);
+        setTimeout(() => {
+            navigate({ to: "/dashboard" });
+        }, 300);
+    };
 
-      {/* Form */}
-      <div className="max-w-2xl bg-white rounded-lg shadow border border-gray-200 p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Project</h1>
-
-        {error && (
-          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Project Name *
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="e.g., Website Redesign"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Describe the project goals and scope"
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              End Date
-            </label>
-            <input
-              type="date"
-              name="endDate"
-              value={formData.endDate}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="flex gap-4 pt-6">
+    return (
+        <div className="grid gap-6">
             <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-colors"
+                onClick={() => navigate({ to: "/dashboard" })}
+                className="back-link w-fit"
             >
-              {loading ? "Creating..." : "Create Project"}
+                <ArrowLeft className="h-5 w-5" />
+                Back to Projects
             </button>
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/dashboard" })}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium py-3 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
+
+            <div className="surface">
+                <div className="surface__body max-w-2xl">
+                    <p className="kicker">Project</p>
+                    <h1 className="page-title">Create new project</h1>
+                    <p className="page-subtitle mt-3">
+                        Give the team a clear place to split work and track
+                        progress.
+                    </p>
+
+                    {error && (
+                        <div className="alert alert--error mt-6">
+                            <AlertCircle className="h-5 w-5 shrink-0" />
+                            <p className="text-sm leading-6">{error}</p>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="mt-6 grid gap-5">
+                        <div className="field">
+                            <label className="label">Project name *</label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                placeholder="e.g., Website redesign"
+                                className="input"
+                            />
+                        </div>
+
+                        <div className="field">
+                            <label className="label">Description</label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                placeholder="Describe the project goals and scope"
+                                rows={4}
+                                className="textarea"
+                            />
+                        </div>
+
+                        <div className="field">
+                            <label className="label">End date</label>
+                            <input
+                                type="date"
+                                name="endDate"
+                                value={formData.endDate}
+                                onChange={handleChange}
+                                className="input"
+                            />
+                        </div>
+
+                        <div className="split-actions pt-2">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="button button--primary"
+                            >
+                                {loading ? "Creating..." : "Create project"}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => navigate({ to: "/dashboard" })}
+                                className="button button--secondary"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
 }

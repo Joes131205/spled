@@ -1,7 +1,6 @@
-import { authApi } from "#/utils/api";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { LogIn, AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, LogIn } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
     component: RouteComponent,
@@ -14,7 +13,7 @@ function RouteComponent() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
 
@@ -28,89 +27,112 @@ function RouteComponent() {
         }
 
         setLoading(true);
-        try {
-            const res = await authApi.post("/auth/login", { email, password });
-            localStorage.setItem("token", res.data.accessToken);
-            localStorage.setItem("role", res.data.user.role);
-            localStorage.setItem("username", res.data.user.username);
-            localStorage.setItem("userId", res.data.user.id);
-            localStorage.setItem(
-                "displayName",
-                res.data.user.displayName || "",
-            );
-            localStorage.setItem("avatarUrl", res.data.user.avatarUrl || "");
+        // Mock login - set demo user data
+        setTimeout(() => {
+            localStorage.setItem("token", "demo-token");
+            localStorage.setItem("role", "leader");
+            localStorage.setItem("username", email.split("@")[0]);
+            localStorage.setItem("userId", "1");
+            localStorage.setItem("displayName", email);
+            localStorage.setItem("avatarUrl", "");
             navigate({ to: "/dashboard" });
-        } catch (err: any) {
-            const status = err.response?.status;
-            if (status === 401) {
-                setError("Incorrect email or password. Please try again.");
-            } else if (status === 404) {
-                setError("No account found with this email.");
-            } else {
-                setError("Something went wrong. Please try again.");
-            }
-        } finally {
-            setLoading(false);
-        }
+        }, 300);
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center px-4">
-            <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-8">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Spled</h1>
-                    <p className="text-gray-600 mt-2">Group Task Splitter</p>
-                </div>
-
-                <form onSubmit={handleLogin} className="space-y-6" noValidate>
-                    {error && (
-                        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-4">
-                            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                            <p className="text-sm text-red-700">{error}</p>
+        <div className="auth-shell">
+            <div className="auth-shell__grid">
+                <section className="auth-hero">
+                    <div className="brand-mark">
+                        <CheckCircle2 className="h-5 w-5" />
+                    </div>
+                    <div className="auth-badge">
+                        <ArrowRight className="h-3.5 w-3.5" />
+                        Work that feels organized
+                    </div>
+                    <h1 className="auth-title">
+                        Split work with less friction.
+                    </h1>
+                    <p className="auth-copy">
+                        Spled keeps projects, tasks, and ownership in one clean
+                        space so teams can focus on shipping instead of sorting
+                        through noise.
+                    </p>
+                    <div className="feature-list">
+                        <div className="feature-item">
+                            <CheckCircle2 className="h-4 w-4 text-cyan-300" />
+                            Role-aware dashboards for leaders and members
                         </div>
-                    )}
+                        <div className="feature-item">
+                            <CheckCircle2 className="h-4 w-4 text-cyan-300" />
+                            Projects, tasks, and profiles in a single flow
+                        </div>
+                        <div className="feature-item">
+                            <CheckCircle2 className="h-4 w-4 text-cyan-300" />A
+                            calmer interface with consistent spacing and type
+                        </div>
+                    </div>
+                </section>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Email Address
-                        </label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="you@example.com"
-                            required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        />
+                <section className="auth-panel">
+                    <div className="mb-8">
+                        <p className="kicker">Welcome back</p>
+                        <h2 className="page-title text-4xl">Sign in</h2>
+                        <p className="page-subtitle mt-3">
+                            Use your account to continue to the dashboard.
+                        </p>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    <form
+                        onSubmit={handleLogin}
+                        className="grid gap-5"
+                        noValidate
                     >
-                        <LogIn className="w-4 h-4" />
-                        {loading ? "Signing in..." : "Sign In"}
-                    </button>
-                </form>
+                        {error && (
+                            <div className="alert alert--error">
+                                <AlertCircle className="h-5 w-5 shrink-0" />
+                                <p className="text-sm leading-6">{error}</p>
+                            </div>
+                        )}
 
-                <p className="text-center text-sm text-gray-600 mt-6">
-                    Demo: email@test.com / pass
-                </p>
+                        <div className="field">
+                            <label className="label">Email address</label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="you@example.com"
+                                required
+                                className="input"
+                            />
+                        </div>
+
+                        <div className="field">
+                            <label className="label">Password</label>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                                className="input"
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="button button--primary w-full"
+                        >
+                            <LogIn className="h-4 w-4" />
+                            {loading ? "Signing in..." : "Sign in"}
+                        </button>
+                    </form>
+
+                    <p className="mt-6 text-sm text-slate-500">
+                        Demo: email@test.com / pass
+                    </p>
+                </section>
             </div>
         </div>
     );

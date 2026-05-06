@@ -10,19 +10,23 @@ import { VerifyEvidenceDto } from '../utils/dto/verifyEvidenceDto';
 const db = prisma;
 @Injectable()
 export class EvidencesService {
-  async uploadEvidence(taskId: string, body: CreateEvidenceDto) {
+  async uploadEvidence(
+    taskId: string,
+    body: CreateEvidenceDto,
+    uploadedBy: string,
+  ) {
     if (!taskId) {
       throw new BadRequestException('Missing task id!');
     }
 
-    if (!body.uploadedBy || !body.fileUrl) {
+    if (!uploadedBy || !body.fileUrl) {
       throw new BadRequestException('uploadedBy and fileUrl are required');
     }
 
     return await db.evidence.create({
       data: {
         taskId,
-        uploadedBy: body.uploadedBy,
+        uploadedBy,
         fileUrl: body.fileUrl,
         description: body.description ?? null,
       },
@@ -39,7 +43,11 @@ export class EvidencesService {
     });
   }
 
-  async verifyEvidence(evidenceId: string, verifyEvidence: VerifyEvidenceDto) {
+  async verifyEvidence(
+    evidenceId: string,
+    verifyEvidence: VerifyEvidenceDto,
+    verifiedBy: string,
+  ) {
     if (!evidenceId) {
       throw new BadRequestException('Missing evidence id!');
     }
@@ -55,7 +63,7 @@ export class EvidencesService {
     return db.evidence.update({
       data: {
         isVerified: verifyEvidence.isVerified,
-        verifiedBy: verifyEvidence.verifiedBy,
+        verifiedBy,
         verificationNotes: verifyEvidence.verificationNotes ?? null,
         verificationDate: new Date(),
       },

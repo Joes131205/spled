@@ -1,165 +1,192 @@
-import { projectApi } from "#/utils/api";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, Edit2, Trash2, CheckCircle2, Circle } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Plus, Edit2 } from "lucide-react";
+
+const MOCK_PROJECTS_MAP: { [key: string]: any } = {
+    "1": {
+        id: "1",
+        name: "Website Redesign",
+        description: "Complete redesign of the company website",
+        endDate: "2026-06-15",
+        createdAt: "2026-05-01",
+    },
+    "2": {
+        id: "2",
+        name: "Mobile App",
+        description: "Launch iOS and Android mobile applications",
+        endDate: "2026-07-30",
+        createdAt: "2026-04-15",
+    },
+};
+
+const MOCK_TASKS = [
+    {
+        id: "1",
+        title: "Design homepage",
+        description: "Create mockups for the homepage",
+        weight: "MEDIUM",
+        status: "IN_PROGRESS",
+        projectId: "1",
+    },
+    {
+        id: "2",
+        title: "Set up database",
+        description: "Configure PostgreSQL for the app",
+        weight: "HARD",
+        status: "TODO",
+        projectId: "1",
+    },
+    {
+        id: "3",
+        title: "API integration",
+        description: "Connect frontend to backend services",
+        weight: "HARD",
+        status: "TODO",
+        projectId: "1",
+    },
+];
 
 export const Route = createFileRoute("/dashboard/project/$projectId")({
-  component: RouteComponent,
+    component: RouteComponent,
 });
 
 function RouteComponent() {
-  const { projectId } = Route.useParams();
-  const navigate = useNavigate();
-  const [project, setProject] = useState<any>(null);
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+    const { projectId } = Route.useParams();
+    const navigate = useNavigate();
+    const project = MOCK_PROJECTS_MAP[projectId];
+    const [tasks, setTasks] = useState(
+        MOCK_TASKS.filter((t) => t.projectId === projectId),
+    );
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const projRes = await projectApi.get(`/projects/${projectId}`);
-        setProject(projRes.data);
-
-        const tasksRes = await projectApi.get(`/tasks?projectId=${projectId}`);
-        setTasks(tasksRes.data || []);
-      } catch (e) {
-        console.error("Failed to load project", e);
-      } finally {
-        setLoading(false);
-      }
+    const handleDeleteTask = (taskId: string) => {
+        if (!confirm("Delete this task?")) return;
+        setTasks(tasks.filter((t) => t.id !== taskId));
     };
-    load();
-  }, [projectId]);
 
-  const handleDeleteTask = async (taskId: string) => {
-    if (!confirm("Delete this task?")) return;
-    try {
-      await projectApi.delete(`/tasks/${taskId}`);
-      setTasks(tasks.filter(t => t.id !== taskId));
-    } catch (e) {
-      console.error("Failed to delete task", e);
+    if (!project) {
+        return (
+            <div className="surface">
+                <div className="empty-state text-red-700">
+                    Project not found
+                </div>
+            </div>
+        );
     }
-  };
 
-  if (loading) {
-    return <div className="text-center py-12">Loading...</div>;
-  }
+    return (
+        <div className="grid gap-6">
+            <button
+                onClick={() => navigate({ to: "/dashboard" })}
+                className="back-link w-fit"
+            >
+                <ArrowLeft className="h-5 w-5" />
+                Back to Projects
+            </button>
 
-  if (!project) {
-    return <div className="text-center py-12 text-red-600">Project not found</div>;
-  }
+            <div className="surface">
+                <div className="surface__body">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <p className="kicker">Project</p>
+                            <h1 className="page-title">{project.name}</h1>
+                            <p className="page-subtitle mt-3">
+                                {project.description}
+                            </p>
+                        </div>
 
-  const getWeightColor = (weight: string) => {
-    switch (weight) {
-      case "EASY": return "bg-green-100 text-green-800";
-      case "MEDIUM": return "bg-yellow-100 text-yellow-800";
-      case "HARD": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
+                        <Link
+                            to="/dashboard/project/$projectId/edit"
+                            params={{ projectId }}
+                            className="button button--ghost"
+                        >
+                            <Edit2 className="h-4 w-4" />
+                            Edit project
+                        </Link>
+                    </div>
+                </div>
+            </div>
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "DONE": return "text-green-600";
-      case "IN_PROGRESS": return "text-blue-600";
-      case "PENDING": return "text-gray-400";
-      default: return "text-gray-400";
-    }
-  };
+            <div className="surface">
+                <div className="surface__header flex items-center justify-between gap-4">
+                    <div>
+                        <p className="kicker mb-1">Tasks</p>
+                        <h2 className="text-2xl font-bold text-slate-900">
+                            Task board
+                        </h2>
+                    </div>
+                    <Link
+                        to="/dashboard/task/create"
+                        search={{ projectId }}
+                        className="button button--primary"
+                    >
+                        <Plus className="h-5 w-5" />
+                        Add task
+                    </Link>
+                </div>
 
-  return (
-    <div>
-      <button
-        onClick={() => navigate({ to: "/dashboard" })}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-medium"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Back to Projects
-      </button>
-
-      {/* Project Header */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-8 mb-8">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
-            <p className="text-gray-600 mt-2">{project.description}</p>
-          </div>
-          <Link
-            to={`/dashboard/project/${projectId}/edit`}
-            className="text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-2"
-          >
-            <Edit2 className="w-5 h-5" />
-            Edit
-          </Link>
+                {tasks.length === 0 ? (
+                    <div className="empty-state">
+                        No tasks yet. Create one to get started.
+                    </div>
+                ) : (
+                    <div className="table-wrap">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Weight</th>
+                                    <th>Status</th>
+                                    <th>Assigned to</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {tasks.map((task) => (
+                                    <tr key={task.id}>
+                                        <td className="font-medium text-slate-900">
+                                            {task.title}
+                                        </td>
+                                        <td>
+                                            <span
+                                                className={`badge ${
+                                                    task.weight === "EASY"
+                                                        ? "badge--success"
+                                                        : task.weight ===
+                                                            "MEDIUM"
+                                                          ? "badge--warning"
+                                                          : "badge--danger"
+                                                }`}
+                                            >
+                                                {task.weight}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span
+                                                className={`badge ${task.status === "DONE" ? "badge--success" : task.status === "IN_PROGRESS" ? "badge--project" : "badge--neutral"}`}
+                                            >
+                                                {task.status}
+                                            </span>
+                                        </td>
+                                        <td className="text-slate-600">
+                                            {task.status || "Unassigned"}
+                                        </td>
+                                        <td>
+                                            <button
+                                                onClick={() =>
+                                                    handleDeleteTask(task.id)
+                                                }
+                                                className="button button--ghost button--compact"
+                                            >
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
         </div>
-      </div>
-
-      {/* Tasks Section */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Tasks</h2>
-          <Link
-            to={`/dashboard/task/create?projectId=${projectId}`}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Add Task
-          </Link>
-        </div>
-
-        {tasks.length === 0 ? (
-          <div className="text-center py-8 text-gray-600">
-            No tasks yet. Create one to get started!
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Name</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Weight</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Assigned To</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tasks.map((task) => (
-                  <tr key={task.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-4 text-sm font-medium text-gray-900">{task.name}</td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getWeightColor(task.weight)}`}>
-                        {task.weight}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className={`flex items-center gap-1 text-sm ${getStatusColor(task.status)}`}>
-                        {task.status === "DONE" ? (
-                          <CheckCircle2 className="w-4 h-4" />
-                        ) : (
-                          <Circle className="w-4 h-4" />
-                        )}
-                        {task.status}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">
-                      {task.assignedTo || "Unassigned"}
-                    </td>
-                    <td className="py-3 px-4">
-                      <button
-                        onClick={() => handleDeleteTask(task.id)}
-                        className="text-red-600 hover:text-red-700 font-medium text-sm"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+    );
 }

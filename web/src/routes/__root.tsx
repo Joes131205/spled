@@ -1,159 +1,189 @@
 import {
-  HeadContent,
-  Scripts,
-  createRootRouteWithContext,
-  Link,
-  useLocation,
-} from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
-import { LogOut, Menu, X } from 'lucide-react'
+    HeadContent,
+    Scripts,
+    createRootRouteWithContext,
+    Link,
+    useLocation,
+} from "@tanstack/react-router";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { TanStackDevtools } from "@tanstack/react-devtools";
+import { LogOut, Menu, ShieldCheck, UserCircle2, X } from "lucide-react";
 
-import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
+import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
-import appCss from '../styles.css?url'
+import appCss from "../styles.css?url";
 
-import type { QueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import type { QueryClient } from "@tanstack/react-query";
+import { useState, type ReactNode } from "react";
 
 interface MyRouterContext {
-  queryClient: QueryClient
+    queryClient: QueryClient;
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  head: () => ({
-    meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'Spled - Group Task Splitter',
-      },
-    ],
-    links: [
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
-    ],
-  }),
-  shellComponent: RootDocument,
-})
-
-function RootDocument({ children }: { children: React.ReactNode }) {
-  const location = useLocation()
-  const isLoginPage = location.pathname === '/login'
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  const handleLogout = () => {
-    localStorage.clear()
-    window.location.href = '/login'
-  }
-
-  if (isLoginPage) {
-    return (
-      <html lang="en">
-        <head>
-          <HeadContent />
-        </head>
-        <body className="bg-gray-50">
-          {children}
-          <Scripts />
-        </body>
-      </html>
-    )
-  }
-
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body className="bg-gray-50">
-        <div className="flex h-screen">
-          {/* Sidebar */}
-          <div
-            className={`fixed inset-y-0 left-0 z-40 w-64 bg-indigo-700 text-white transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 ${
-              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            }`}
-          >
-            <div className="p-6">
-              <h1 className="text-2xl font-bold">Spled</h1>
-              <p className="text-indigo-200 text-sm">Task Splitter</p>
-            </div>
-            <nav className="space-y-2 px-4">
-              <Link
-                to="/dashboard"
-                className="block px-4 py-2 rounded hover:bg-indigo-600 transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/dashboard/profile/edit"
-                className="block px-4 py-2 rounded hover:bg-indigo-600 transition-colors"
-              >
-                Profile
-              </Link>
-            </nav>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between px-4 py-4 md:px-6">
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="md:hidden p-2 hover:bg-gray-100 rounded"
-                >
-                  {sidebarOpen ? (
-                    <X className="w-5 h-5" />
-                  ) : (
-                    <Menu className="w-5 h-5" />
-                  )}
-                </button>
-
-                <div className="flex items-center gap-4 ml-auto">
-                  <span className="text-sm text-gray-600">
-                    {localStorage.getItem('displayName') ||
-                      localStorage.getItem('username')}
-                  </span>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Logout
-                  </button>
-                </div>
-              </div>
-            </header>
-
-            {/* Page Content */}
-            <main className="flex-1 overflow-auto">
-              <div className="container mx-auto p-4 md:p-6">{children}</div>
-            </main>
-          </div>
-        </div>
-
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
+    head: () => ({
+        meta: [
             {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
+                charSet: "utf-8",
             },
-            TanStackQueryDevtools,
-          ]}
-        />
-        <Scripts />
-      </body>
-    </html>
-  )
+            {
+                name: "viewport",
+                content: "width=device-width, initial-scale=1",
+            },
+            {
+                title: "Spled - Group Task Splitter",
+            },
+        ],
+        links: [
+            {
+                rel: "stylesheet",
+                href: appCss,
+            },
+        ],
+    }),
+    shellComponent: RootDocument,
+});
+
+function RootDocument({ children }: { children: ReactNode }) {
+    const location = useLocation();
+    const isLoginPage = location.pathname === "/login";
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const handleLogout = () => {
+        if (typeof window !== "undefined") {
+            localStorage.clear();
+            window.location.href = "/login";
+        }
+    };
+
+    const userLabel =
+        typeof window !== "undefined"
+            ? localStorage.getItem("displayName") ||
+              localStorage.getItem("username") ||
+              "Guest"
+            : "Guest";
+    const userRole =
+        typeof window !== "undefined"
+            ? (localStorage.getItem("role") || "member").replace(/_/g, " ")
+            : "member";
+
+    const linkClass = (path: string) => {
+        const active =
+            location.pathname === path ||
+            (path === "/dashboard" &&
+                location.pathname.startsWith("/dashboard"));
+
+        return `nav-link ${active ? "nav-link--active" : ""}`;
+    };
+
+    if (isLoginPage) {
+        return (
+            <html lang="en">
+                <head>
+                    <HeadContent />
+                </head>
+                <body className="app-auth">
+                    {children}
+                    <Scripts />
+                </body>
+            </html>
+        );
+    }
+
+    return (
+        <html lang="en">
+            <head>
+                <HeadContent />
+            </head>
+            <body>
+                <div className="app-shell">
+                    <aside
+                        className="app-sidebar"
+                        style={{
+                            transform: sidebarOpen
+                                ? "translateX(0)"
+                                : undefined,
+                        }}
+                    >
+                        <div className="app-sidebar__brand">
+                            <div className="brand-mark">
+                                <ShieldCheck className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <div className="brand-name">Spled</div>
+                                <div className="brand-subtitle">
+                                    Group task splitter
+                                </div>
+                            </div>
+                        </div>
+
+                        <nav className="nav-stack">
+                            <Link
+                                to="/dashboard"
+                                className={linkClass("/dashboard")}
+                            >
+                                <UserCircle2 className="h-4 w-4" />
+                                Dashboard
+                            </Link>
+                            <Link
+                                to="/dashboard/profile/edit"
+                                className={linkClass("/dashboard/profile/edit")}
+                            >
+                                <UserCircle2 className="h-4 w-4" />
+                                Profile
+                            </Link>
+                        </nav>
+                    </aside>
+
+                    <div className="content-shell">
+                        <header className="topbar">
+                            <button
+                                onClick={() => setSidebarOpen(!sidebarOpen)}
+                                className="button button--ghost button--compact md:hidden"
+                                aria-label="Toggle sidebar"
+                            >
+                                {sidebarOpen ? (
+                                    <X className="h-5 w-5" />
+                                ) : (
+                                    <Menu className="h-5 w-5" />
+                                )}
+                            </button>
+
+                            <div className="topbar__group ml-auto">
+                                <div className="topbar__user">
+                                    <p className="topbar__name">{userLabel}</p>
+                                    <p className="topbar__role">{userRole}</p>
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="button button--ghost button--compact"
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                    Logout
+                                </button>
+                            </div>
+                        </header>
+
+                        <main className="main-area">
+                            <div className="page">{children}</div>
+                        </main>
+                    </div>
+                </div>
+
+                <TanStackDevtools
+                    config={{
+                        position: "bottom-right",
+                    }}
+                    plugins={[
+                        {
+                            name: "Tanstack Router",
+                            render: <TanStackRouterDevtoolsPanel />,
+                        },
+                        TanStackQueryDevtools,
+                    ]}
+                />
+                <Scripts />
+            </body>
+        </html>
+    );
 }

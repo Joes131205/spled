@@ -15,11 +15,11 @@ import { RolesGuard } from '../utils/guards/roles.guard';
 import { Roles } from '../utils/decorators/roles.decorator';
 
 @Controller('projects')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post('')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('LEADER')
   createProject(@Body() body: createProjectDto) {
     return this.projectsService.createProject(body);
@@ -31,14 +31,12 @@ export class ProjectsController {
   }
 
   @Patch(':projectId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('LEADER')
   updateProject(@Param('projectId') projectId: string, @Body() body: unknown) {
     return this.projectsService.updateProject(projectId, body);
   }
 
   @Delete(':projectId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('LEADER')
   deleteProject(@Param('projectId') projectId: string) {
     return this.projectsService.deleteProject(projectId);

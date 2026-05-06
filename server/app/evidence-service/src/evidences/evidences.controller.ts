@@ -5,35 +5,53 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { EvidencesService } from './evidences.service';
 import { CreateEvidenceDto } from '../utils/dto/createEvidenceDto';
 import { VerifyEvidenceDto } from '../utils/dto/verifyEvidenceDto';
 import { JwtAuthGuard } from '../utils/guards/jwt.guard';
+import { RolesGuard } from '../utils/guards/roles.guard';
+import { Roles } from '../utils/decorators/roles.decorator';
+
+type AuthenticatedRequest = Request & {
+  user: { userId: string; role: string };
+};
+
 @Controller()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class EvidencesController {
   constructor(private readonly evidencesService: EvidencesService) {}
 
   @Post('evidence/:taskId')
+  @Roles('LEADER', 'MEMBER')
   uploadEvidence(
     @Param('taskId') taskId: string,
     @Body() body: CreateEvidenceDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.evidencesService.uploadEvidence(taskId, body);
+    return this.evidencesService.uploadEvidence(taskId, body, req.user.userId);
   }
 
   @Get('evidence/:taskId')
+  @Roles('LEADER', 'MEMBER')
   getEvidenceByTask(@Param('taskId') taskId: string) {
     return this.evidencesService.getEvidenceByTask(taskId);
   }
 
   @Put('evidence/:evidenceId/verify')
+  @Roles('LEADER')
   verifyEvidence(
     @Param('evidenceId') evidenceId: string,
     @Body() verifyEvidence: VerifyEvidenceDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.evidencesService.verifyEvidence(evidenceId, verifyEvidence);
+    return this.evidencesService.verifyEvidence(
+      evidenceId,
+      verifyEvidence,
+      req.user.userId,
+    );
   }
 }
