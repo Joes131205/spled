@@ -5,7 +5,7 @@ import { PrismaClient } from '../generated/prisma/client.js';
 
 const envCandidates = [
   resolve(process.cwd(), '.env'),
-  resolve(process.cwd(), 'app', 'evidence-service', '.env'),
+  resolve(process.cwd(), 'app', 'ghost-buster-service', '.env'),
   resolve(__dirname, '../../.env'),
 ];
 

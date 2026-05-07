@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EvidencesService } from './evidences.service';
 import { CreateEvidenceDto } from '../utils/dto/createEvidenceDto';
 import { VerifyEvidenceDto } from '../utils/dto/verifyEvidenceDto';
@@ -21,11 +22,14 @@ type AuthenticatedRequest = Request & {
 };
 
 @Controller()
+@ApiTags('Evidences')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class EvidencesController {
   constructor(private readonly evidencesService: EvidencesService) {}
 
   @Post('evidence/:taskId')
+  @ApiOperation({ summary: 'Upload evidence for a task' })
   @Roles('LEADER', 'MEMBER')
   uploadEvidence(
     @Param('taskId') taskId: string,
@@ -36,12 +40,14 @@ export class EvidencesController {
   }
 
   @Get('evidence/:taskId')
+  @ApiOperation({ summary: 'Get evidence by task id' })
   @Roles('LEADER', 'MEMBER')
   getEvidenceByTask(@Param('taskId') taskId: string) {
     return this.evidencesService.getEvidenceByTask(taskId);
   }
 
   @Put('evidence/:evidenceId/verify')
+  @ApiOperation({ summary: 'Verify evidence as project leader' })
   @Roles('LEADER')
   verifyEvidence(
     @Param('evidenceId') evidenceId: string,

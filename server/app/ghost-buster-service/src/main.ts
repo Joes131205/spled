@@ -6,8 +6,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = new DocumentBuilder()
     .setTitle('Ghost Buster Service API')
-    .setDescription('Ghost buster service endpoints')
+    .setDescription(
+      'Track inactivity flags and configure member ghosting rules',
+    )
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);

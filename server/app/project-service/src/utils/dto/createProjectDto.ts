@@ -7,22 +7,22 @@ import {
 } from 'class-validator';
 
 export class createProjectDto {
-  @ApiProperty()
+  @ApiProperty({ example: 'New campus app' })
   @IsString()
   @IsNotEmpty()
   name!: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'leader-123' })
   @IsString()
   @IsNotEmpty()
   leaderId!: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false, example: 'Project for the 2026 demo app' })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false, example: '2026-12-31' })
   @IsOptional()
   @IsDateString()
   endDate?: string;

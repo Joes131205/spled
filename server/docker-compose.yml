@@ -1,0 +1,22 @@
+services:
+    db:
+        image: mariadb:11
+        container_name: spled-db
+        restart: unless-stopped
+        environment:
+            MARIADB_ROOT_PASSWORD: rootpass
+            MARIADB_USER: spled
+            MARIADB_PASSWORD: spledpass
+        ports:
+            - "3307:3306"
+        volumes:
+            - spled_db_data:/var/lib/mysql
+            - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+        healthcheck:
+            test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+            interval: 5s
+            timeout: 3s
+            retries: 20
+
+volumes:
+    spled_db_data:

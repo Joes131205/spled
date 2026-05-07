@@ -26,7 +26,7 @@ export class ProjectsService {
     return project;
   }
 
-  async updateProject(projectId: string, body: any) {
+  async updateProject(projectId: string, body: createProjectDto) {
     const project = await db.project.findUnique({
       where: { id: projectId },
     });

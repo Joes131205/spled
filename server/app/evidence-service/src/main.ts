@@ -6,10 +6,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS
   app.enableCors();
 
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -18,20 +16,19 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger/OpenAPI documentation
   const config = new DocumentBuilder()
     .setTitle('Evidence Service API')
     .setDescription(
-      'Manages evidence submissions and verification for group task contributions',
+      'Upload, review, and verify evidence submitted for project tasks',
     )
+    .addBearerAuth()
     .setVersion('1.0.0')
-    .addTag('evidences', 'Evidence submission and verification endpoints')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  const port = process.env.PORT ?? 3001;
+  const port = process.env.PORT ?? 3004;
   await app.listen(port);
   console.log(`Evidence Service running on http://localhost:${port}`);
   console.log(`API Documentation available at http://localhost:${port}/docs`);
