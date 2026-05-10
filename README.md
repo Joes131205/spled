@@ -1,16 +1,6 @@
-# Group Task Splitter
+# Spled
 
-A full-stack monorepo for managing group projects, tracking task ownership, collecting evidence of work, and supporting lecturer review of individual contributions.
-
-## Description
-
-Group Task Splitter is designed to reduce free-riding in team assignments by combining:
-
--   project and task management
--   evidence-based contribution tracking
--   inactivity monitoring for inactive members
--   lecturer access for read-only review
--   a modern web UI for day-to-day project work
+Spled is a full-stack application designed to ensure fairness in group projects through transparent task management, evidence-based contribution tracking, and real-time accountability monitoring.
 
 ## Repository Structure
 
@@ -139,51 +129,3 @@ Example:
 
 -   `http://localhost:3001/docs`
 -   `http://localhost:3003/docs`
-
-## Useful Scripts
-
-### Web
-
-```bash
-cd web
-bun run dev
-bun run build
-bun run test
-bun run lint
-bun run check
-bun run format
-```
-
-### Server
-
-```bash
-cd server
-bun run dev
-bun run build
-bun run test
-bun run lint
-bun run format
-bun run test:e2e
-```
-
-## Environment Notes
-
--   Backend services use a local `.env` file in each service folder.
--   The default database connection points to `localhost:3307`.
--   JWT auth uses `JWT_SECRET` if you set it, otherwise it falls back to the local default used by the services.
-
-## Project Status
-
-This project is currently in MVP state.
-
--   core auth flow works
--   project/task management is wired
--   evidence submission and review are wired
--   ghost buster monitoring is implemented as a simple MVP
--   frontend and backend can be run independently
-
-## Troubleshooting
-
--   If Docker complains about port `3306`, this repo already uses `3307` for local development.
--   If Prisma says `DATABASE_URL` is missing, make sure you run the command from the correct service directory.
--   If a service cannot connect to the database, confirm Docker Desktop is running and `docker compose up -d` succeeded in `server/`.
