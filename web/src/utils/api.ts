@@ -7,7 +7,7 @@ const projectApi: AxiosInstance = axios.create({
     baseURL: "http://localhost:3003",
 });
 const evidenceApi: AxiosInstance = axios.create({
-    baseURL: "http://localhost:3003",
+    baseURL: "http://localhost:3004",
 });
 
 const addAuthInterceptor = (instance: AxiosInstance): void => {

@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { config as loadEnv } from 'dotenv';
-import { PrismaClient } from '../generated/prisma/client';
+import { PrismaClient } from '@spled/prisma-auth';
 
 const envCandidates = [
   resolve(process.cwd(), '.env'),

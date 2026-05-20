@@ -7,7 +7,8 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { LogOut, Menu, ShieldCheck, UserCircle2, X } from "lucide-react";
+import { LogOut, Menu, ShieldCheck, UserCircle2, X, LayoutDashboard, User, Mail } from "lucide-react";
+import React from "react";
 
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
@@ -46,8 +47,15 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootDocument({ children }: { children: ReactNode }) {
     const location = useLocation();
-    const isLoginPage = location.pathname === "/login";
+    const isAuthPage =
+        location.pathname === "/login" || location.pathname === "/signup";
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+
+    // Use effect to handle mounting state for hydration safety
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const handleLogout = () => {
         if (typeof window !== "undefined") {
@@ -57,118 +65,145 @@ function RootDocument({ children }: { children: ReactNode }) {
     };
 
     const userLabel =
-        typeof window !== "undefined"
-            ? localStorage.getItem("displayName") ||
-              localStorage.getItem("username") ||
-              "Guest"
+        isMounted && typeof window !== "undefined"
+            ? localStorage.getItem("displayName") && localStorage.getItem("displayName") !== "undefined"
+                ? localStorage.getItem("displayName")
+                : localStorage.getItem("username") && localStorage.getItem("username") !== "undefined"
+                    ? localStorage.getItem("username")
+                    : "Guest"
             : "Guest";
+    const rawRole =
+        isMounted && typeof window !== "undefined"
+            ? localStorage.getItem("role") || "MEMBER"
+            : "MEMBER";
+
     const userRole =
-        typeof window !== "undefined"
-            ? (localStorage.getItem("role") || "member").replace(/_/g, " ")
-            : "member";
+        rawRole === "LECTURER" ? "Lecturer" : "Student";
+
+    const userEmail =
+        isMounted && typeof window !== "undefined"
+            ? localStorage.getItem("email") && localStorage.getItem("email") !== "undefined"
+                ? localStorage.getItem("email")
+                : "user@example.com"
+            : "user@example.com";
 
     const linkClass = (path: string) => {
         const active =
-            location.pathname === path ||
-            (path === "/dashboard" &&
-                location.pathname.startsWith("/dashboard"));
+            path === "/dashboard"
+                ? location.pathname === "/dashboard" ||
+                  location.pathname === "/"
+                : location.pathname.startsWith(path);
 
         return `nav-link ${active ? "nav-link--active" : ""}`;
     };
 
-    if (isLoginPage) {
-        return (
-            <html lang="en">
-                <head>
-                    <HeadContent />
-                </head>
-                <body className="app-auth">
-                    {children}
-                    <Scripts />
-                </body>
-            </html>
-        );
-    }
+    const bodyClass = isAuthPage ? "app-auth" : "";
 
     return (
         <html lang="en">
             <head>
                 <HeadContent />
             </head>
-            <body>
-                <div className="app-shell">
-                    <aside
-                        className="app-sidebar"
-                        style={{
-                            transform: sidebarOpen
-                                ? "translateX(0)"
-                                : undefined,
-                        }}
-                    >
-                        <div className="app-sidebar__brand">
-                            <div className="brand-mark">
-                                <ShieldCheck className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <div className="brand-name">Spled</div>
-                                <div className="brand-subtitle">
-                                    Group task splitter
+            <body className={bodyClass}>
+                {isAuthPage ? (
+                    children
+                ) : (
+                    <div className="app-shell">
+                        <aside
+                            className="app-sidebar flex flex-col"
+                            style={{
+                                transform: sidebarOpen
+                                    ? "translateX(0)"
+                                    : undefined,
+                            }}
+                        >
+                            <div className="app-sidebar__brand">
+                                <div className="brand-mark bg-white border border-slate-100 overflow-hidden p-2">
+                                    <img src="/logo.png" alt="Spled" className="h-full w-full object-contain" />
+                                </div>
+                                <div>
+                                    <div className="brand-name font-serif text-xl">Spled</div>
+                                    <div className="brand-subtitle">
+                                        Group task splitter
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <nav className="nav-stack">
-                            <Link
-                                to="/dashboard"
-                                className={linkClass("/dashboard")}
-                            >
-                                <UserCircle2 className="h-4 w-4" />
-                                Dashboard
-                            </Link>
-                            <Link
-                                to="/dashboard/profile/edit"
-                                className={linkClass("/dashboard/profile/edit")}
-                            >
-                                <UserCircle2 className="h-4 w-4" />
-                                Profile
-                            </Link>
-                        </nav>
-                    </aside>
-
-                    <div className="content-shell">
-                        <header className="topbar">
-                            <button
-                                onClick={() => setSidebarOpen(!sidebarOpen)}
-                                className="button button--ghost button--compact md:hidden"
-                                aria-label="Toggle sidebar"
-                            >
-                                {sidebarOpen ? (
-                                    <X className="h-5 w-5" />
-                                ) : (
-                                    <Menu className="h-5 w-5" />
-                                )}
-                            </button>
-
-                            <div className="topbar__group ml-auto">
-                                <div className="topbar__user">
-                                    <p className="topbar__name">{userLabel}</p>
-                                    <p className="topbar__role">{userRole}</p>
-                                </div>
-                                <button
-                                    onClick={handleLogout}
-                                    className="button button--ghost button--compact"
+                            <nav className="nav-stack flex-1">
+                                <p className="nav-section-title">Workspace</p>
+                                <Link
+                                    to="/dashboard"
+                                    className={linkClass("/dashboard")}
                                 >
-                                    <LogOut className="h-4 w-4" />
-                                    Logout
-                                </button>
-                            </div>
-                        </header>
+                                    <LayoutDashboard className="h-4 w-4" />
+                                    Dashboard
+                                </Link>
 
-                        <main className="main-area">
-                            <div className="page">{children}</div>
-                        </main>
+                                <p className="nav-section-title">Account</p>
+                                <Link
+                                    to="/dashboard/profile/edit"
+                                    className={linkClass(
+                                        "/dashboard/profile/edit"
+                                    )}
+                                >
+                                    <User className="h-4 w-4" />
+                                    Profile
+                                </Link>
+                                <Link
+                                    to="/dashboard"
+                                    className="nav-link"
+                                >
+                                    <Mail className="h-4 w-4" />
+                                    Invitations
+                                </Link>
+                            </nav>
+
+                            <div className="app-sidebar__footer">
+                                <div className="sidebar-user">
+                                    <div className="sidebar-user__avatar">
+                                        <div className="flex h-full w-full items-center justify-center bg-indigo-50 text-xs font-bold text-indigo-700">
+                                            {userLabel.charAt(0)}
+                                        </div>
+                                    </div>
+                                    <div className="sidebar-user__info">
+                                        <div className="sidebar-user__name">{userLabel}</div>
+                                        <div className="sidebar-user__email">{userEmail}</div>
+                                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+                                            {userRole}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="sidebar-user__logout"
+                                        title="Logout"
+                                    >
+                                        <LogOut className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </aside>
+
+                        <div className="content-shell">
+                            <header className="topbar md:hidden">
+                                <button
+                                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                                    className="button button--ghost button--compact md:hidden"
+                                    aria-label="Toggle sidebar"
+                                >
+                                    {sidebarOpen ? (
+                                        <X className="h-5 w-5" />
+                                    ) : (
+                                        <Menu className="h-5 w-5" />
+                                    )}
+                                </button>
+                            </header>
+
+                            <main className="main-area">
+                                <div className="page">{children}</div>
+                            </main>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <TanStackDevtools
                     config={{
