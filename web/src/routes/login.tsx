@@ -32,6 +32,7 @@ function RouteComponent() {
             localStorage.setItem("userId", data.user.id);
             localStorage.setItem("role", data.user.role || "MEMBER");
             localStorage.setItem("displayName", data.user.displayName || data.user.username);
+            localStorage.setItem("avatarUrl", data.user.avatarUrl || "");
             navigate({ to: "/dashboard" });
         },
         onError: () => {

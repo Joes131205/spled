@@ -19,6 +19,9 @@ import { Route as DashboardProjectEditRouteImport } from './routes/dashboard/pro
 import { Route as DashboardProjectCreateRouteImport } from './routes/dashboard/project/create'
 import { Route as DashboardProjectProjectIdRouteImport } from './routes/dashboard/project/$projectId'
 import { Route as DashboardProfileEditRouteImport } from './routes/dashboard/profile/edit'
+import { Route as DashboardProfileDisplayRouteImport } from './routes/dashboard/profile/display'
+import { Route as DashboardInvitationsPendingRouteImport } from './routes/dashboard/invitations/pending'
+import { Route as DashboardInvitationsHistoryRouteImport } from './routes/dashboard/invitations/history'
 import { Route as DashboardProjectProjectIdEditRouteImport } from './routes/dashboard/project/$projectId.edit'
 
 const SignupRoute = SignupRouteImport.update({
@@ -72,6 +75,23 @@ const DashboardProfileEditRoute = DashboardProfileEditRouteImport.update({
   path: '/dashboard/profile/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardProfileDisplayRoute = DashboardProfileDisplayRouteImport.update({
+  id: '/dashboard/profile/display',
+  path: '/dashboard/profile/display',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardInvitationsPendingRoute =
+  DashboardInvitationsPendingRouteImport.update({
+    id: '/dashboard/invitations/pending',
+    path: '/dashboard/invitations/pending',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DashboardInvitationsHistoryRoute =
+  DashboardInvitationsHistoryRouteImport.update({
+    id: '/dashboard/invitations/history',
+    path: '/dashboard/invitations/history',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DashboardProjectProjectIdEditRoute =
   DashboardProjectProjectIdEditRouteImport.update({
     id: '/edit',
@@ -84,6 +104,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/invitations/history': typeof DashboardInvitationsHistoryRoute
+  '/dashboard/invitations/pending': typeof DashboardInvitationsPendingRoute
+  '/dashboard/profile/display': typeof DashboardProfileDisplayRoute
   '/dashboard/profile/edit': typeof DashboardProfileEditRoute
   '/dashboard/project/$projectId': typeof DashboardProjectProjectIdRouteWithChildren
   '/dashboard/project/create': typeof DashboardProjectCreateRoute
@@ -97,6 +120,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/invitations/history': typeof DashboardInvitationsHistoryRoute
+  '/dashboard/invitations/pending': typeof DashboardInvitationsPendingRoute
+  '/dashboard/profile/display': typeof DashboardProfileDisplayRoute
   '/dashboard/profile/edit': typeof DashboardProfileEditRoute
   '/dashboard/project/$projectId': typeof DashboardProjectProjectIdRouteWithChildren
   '/dashboard/project/create': typeof DashboardProjectCreateRoute
@@ -111,6 +137,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/invitations/history': typeof DashboardInvitationsHistoryRoute
+  '/dashboard/invitations/pending': typeof DashboardInvitationsPendingRoute
+  '/dashboard/profile/display': typeof DashboardProfileDisplayRoute
   '/dashboard/profile/edit': typeof DashboardProfileEditRoute
   '/dashboard/project/$projectId': typeof DashboardProjectProjectIdRouteWithChildren
   '/dashboard/project/create': typeof DashboardProjectCreateRoute
@@ -126,6 +155,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/dashboard/'
+    | '/dashboard/invitations/history'
+    | '/dashboard/invitations/pending'
+    | '/dashboard/profile/display'
     | '/dashboard/profile/edit'
     | '/dashboard/project/$projectId'
     | '/dashboard/project/create'
@@ -139,6 +171,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/dashboard'
+    | '/dashboard/invitations/history'
+    | '/dashboard/invitations/pending'
+    | '/dashboard/profile/display'
     | '/dashboard/profile/edit'
     | '/dashboard/project/$projectId'
     | '/dashboard/project/create'
@@ -152,6 +187,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/dashboard/'
+    | '/dashboard/invitations/history'
+    | '/dashboard/invitations/pending'
+    | '/dashboard/profile/display'
     | '/dashboard/profile/edit'
     | '/dashboard/project/$projectId'
     | '/dashboard/project/create'
@@ -166,6 +204,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardInvitationsHistoryRoute: typeof DashboardInvitationsHistoryRoute
+  DashboardInvitationsPendingRoute: typeof DashboardInvitationsPendingRoute
+  DashboardProfileDisplayRoute: typeof DashboardProfileDisplayRoute
   DashboardProfileEditRoute: typeof DashboardProfileEditRoute
   DashboardProjectProjectIdRoute: typeof DashboardProjectProjectIdRouteWithChildren
   DashboardProjectCreateRoute: typeof DashboardProjectCreateRoute
@@ -246,6 +287,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardProfileEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/profile/display': {
+      id: '/dashboard/profile/display'
+      path: '/dashboard/profile/display'
+      fullPath: '/dashboard/profile/display'
+      preLoaderRoute: typeof DashboardProfileDisplayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/invitations/pending': {
+      id: '/dashboard/invitations/pending'
+      path: '/dashboard/invitations/pending'
+      fullPath: '/dashboard/invitations/pending'
+      preLoaderRoute: typeof DashboardInvitationsPendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/invitations/history': {
+      id: '/dashboard/invitations/history'
+      path: '/dashboard/invitations/history'
+      fullPath: '/dashboard/invitations/history'
+      preLoaderRoute: typeof DashboardInvitationsHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/project/$projectId/edit': {
       id: '/dashboard/project/$projectId/edit'
       path: '/edit'
@@ -275,6 +337,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardInvitationsHistoryRoute: DashboardInvitationsHistoryRoute,
+  DashboardInvitationsPendingRoute: DashboardInvitationsPendingRoute,
+  DashboardProfileDisplayRoute: DashboardProfileDisplayRoute,
   DashboardProfileEditRoute: DashboardProfileEditRoute,
   DashboardProjectProjectIdRoute: DashboardProjectProjectIdRouteWithChildren,
   DashboardProjectCreateRoute: DashboardProjectCreateRoute,

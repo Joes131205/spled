@@ -96,6 +96,8 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   username: 'username',
+  displayName: 'displayName',
+  avatarUrl: 'avatarUrl',
   email: 'email',
   password: 'password',
   role: 'role',
@@ -126,6 +128,8 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.UserOrderByRelevanceFieldEnum = {
   id: 'id',
   username: 'username',
+  displayName: 'displayName',
+  avatarUrl: 'avatarUrl',
   email: 'email',
   password: 'password',
   lecturerAccessCode: 'lecturerAccessCode'
@@ -161,7 +165,6 @@ const config = {
       "fromEnvVar": null
     },
     "config": {
-      "moduleFormat": "cjs",
       "engineType": "library"
     },
     "binaryTargets": [
@@ -176,7 +179,7 @@ const config = {
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../.env"
   },
   "relativePath": "../../../prisma",
@@ -195,13 +198,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider     = \"prisma-client-js\"\n  output       = \"../src/db/generated\"\n  moduleFormat = \"cjs\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nenum Role {\n  LEADER\n  MEMBER\n  LECTURER\n}\n\nmodel User {\n  id        String   @id @default(uuid())\n  username  String   @unique\n  email     String   @unique\n  password  String\n  role      Role     @default(MEMBER)\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  // Lecturer access tracking (read-only view token)\n  lecturerAccessCode   String?   @unique\n  lecturerAccessExpiry DateTime?\n}\n\nmodel LecturerAccessToken {\n  id        String   @id @default(uuid())\n  projectId String   @unique\n  token     String   @unique\n  createdAt DateTime @default(now())\n  expiresAt DateTime\n}\n",
-  "inlineSchemaHash": "16c65b95c65af15ee065116d3e9c7ac8690e31bc4f8f2a51a38cf201bf879070",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../src/db/generated\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nenum Role {\n  LEADER\n  MEMBER\n  LECTURER\n}\n\nmodel User {\n  id          String   @id @default(uuid())\n  username    String   @unique\n  displayName String?\n  avatarUrl   String?  @db.LongText\n  email       String   @unique\n  password    String\n  role        Role     @default(MEMBER)\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n\n  // Lecturer access tracking (read-only view token)\n  lecturerAccessCode   String?   @unique\n  lecturerAccessExpiry DateTime?\n}\n\nmodel LecturerAccessToken {\n  id        String   @id @default(uuid())\n  projectId String   @unique\n  token     String   @unique\n  createdAt DateTime @default(now())\n  expiresAt DateTime\n}\n",
+  "inlineSchemaHash": "4ab18cd0715a53bdcceb645ade8a7ead06ca21cef6b520a6acd29926fd74e74f",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"Role\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"lecturerAccessCode\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lecturerAccessExpiry\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"LecturerAccessToken\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"displayName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"avatarUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"Role\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"lecturerAccessCode\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lecturerAccessExpiry\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"LecturerAccessToken\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"projectId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

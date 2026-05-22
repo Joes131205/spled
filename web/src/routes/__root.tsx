@@ -87,6 +87,11 @@ function RootDocument({ children }: { children: ReactNode }) {
                 : "user@example.com"
             : "user@example.com";
 
+    const userAvatar =
+        isMounted && typeof window !== "undefined"
+            ? localStorage.getItem("avatarUrl")
+            : null;
+
     const linkClass = (path: string) => {
         const active =
             path === "/dashboard"
@@ -122,7 +127,7 @@ function RootDocument({ children }: { children: ReactNode }) {
                                     <img src="/logo.png" alt="Spled" className="h-full w-full object-contain" />
                                 </div>
                                 <div>
-                                    <div className="brand-name font-serif text-xl">Spled</div>
+                                    <div className="brand-name text-xl">Spled</div>
                                     <div className="brand-subtitle">
                                         Group task splitter
                                     </div>
@@ -141,17 +146,19 @@ function RootDocument({ children }: { children: ReactNode }) {
 
                                 <p className="nav-section-title">Account</p>
                                 <Link
-                                    to="/dashboard/profile/edit"
+                                    to="/dashboard/profile/display"
                                     className={linkClass(
-                                        "/dashboard/profile/edit"
+                                        "/dashboard/profile/display"
                                     )}
                                 >
                                     <User className="h-4 w-4" />
                                     Profile
                                 </Link>
                                 <Link
-                                    to="/dashboard"
-                                    className="nav-link"
+                                    to="/dashboard/invitations/pending"
+                                    className={linkClass(
+                                        "/dashboard/invitations/pending"
+                                    )}
                                 >
                                     <Mail className="h-4 w-4" />
                                     Invitations
@@ -161,9 +168,17 @@ function RootDocument({ children }: { children: ReactNode }) {
                             <div className="app-sidebar__footer">
                                 <div className="sidebar-user">
                                     <div className="sidebar-user__avatar">
-                                        <div className="flex h-full w-full items-center justify-center bg-indigo-50 text-xs font-bold text-indigo-700">
-                                            {userLabel.charAt(0)}
-                                        </div>
+                                        {userAvatar ? (
+                                            <img
+                                                src={userAvatar}
+                                                alt={userLabel}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex h-full w-full items-center justify-center bg-indigo-50 text-xs font-bold text-indigo-700">
+                                                {userLabel.charAt(0)}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="sidebar-user__info">
                                         <div className="sidebar-user__name">{userLabel}</div>
