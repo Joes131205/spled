@@ -1,13 +1,13 @@
 import axios, { type AxiosInstance } from "axios";
 
 const authApi: AxiosInstance = axios.create({
-    baseURL: "http://localhost:3001",
+    baseURL: "http://127.0.0.1:3001",
 });
 const projectApi: AxiosInstance = axios.create({
-    baseURL: "http://localhost:3003",
+    baseURL: "http://127.0.0.1:3003",
 });
 const evidenceApi: AxiosInstance = axios.create({
-    baseURL: "http://localhost:3004",
+    baseURL: "http://127.0.0.1:3004",
 });
 
 const addAuthInterceptor = (instance: AxiosInstance): void => {

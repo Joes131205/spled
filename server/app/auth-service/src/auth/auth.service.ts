@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -45,6 +46,7 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync({
       sub: user.id,
       role: user.role,
+      email: user.email,
     });
 
     return {
@@ -71,6 +73,7 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync({
       sub: user.id,
       role: user.role,
+      email: user.email,
     });
 
     return {
@@ -89,5 +92,25 @@ export class AuthService {
     }
 
     return this.sanitizeUser(user);
+  }
+
+  async getUserById(userId: string) {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.sanitizeUser(user);
+  }
+
+  async checkEmail(email: string) {
+    const user = await db.user.findUnique({
+      where: { email },
+    });
+    return { 
+      exists: !!user,
+      role: user?.role
+    };
   }
 }

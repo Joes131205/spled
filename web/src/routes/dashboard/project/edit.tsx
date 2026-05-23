@@ -1,21 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AlertCircle, ArrowLeft, Trash2 } from "lucide-react";
-
-const MOCK_PROJECTS_MAP: { [key: string]: any } = {
-    "1": {
-        id: "1",
-        name: "Website Redesign",
-        description: "Complete redesign of the company website",
-        endDate: "2026-06-15",
-    },
-    "2": {
-        id: "2",
-        name: "Mobile App",
-        description: "Launch iOS and Android mobile applications",
-        endDate: "2026-07-30",
-    },
-};
+import { AlertCircle, ArrowLeft, Trash2, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { projectApi } from "../../../utils/api";
 
 export const Route = createFileRoute("/dashboard/project/edit")({
     component: RouteComponent,
@@ -25,39 +12,70 @@ export const Route = createFileRoute("/dashboard/project/edit")({
 });
 
 function RouteComponent() {
-    const [name, setName] = useState("");
-    const [description, setDescription] = useState("");
-    const [endDate, setEndDate] = useState("");
-    const [error, setError] = useState("");
-    const [submitting, setSubmitting] = useState(false);
-    const [deleting, setDeleting] = useState(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const navigate = useNavigate();
     const { id } = Route.useSearch();
-    const role = localStorage.getItem("role");
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
+    const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
+    const { data: project, isLoading } = useQuery({
+        queryKey: ["projects", id],
+        queryFn: async () => {
+            const response = await projectApi.get(`/projects/${id}`);
+            return response.data;
+        },
+        enabled: !!id,
+    });
+
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        endDate: "",
+    });
 
     useEffect(() => {
-        if (role !== "LEADER") {
-            navigate({ to: "/dashboard" });
-            return;
-        }
-
-        if (!id) {
-            setError("Missing project id.");
-            return;
-        }
-
-        const mockProject = MOCK_PROJECTS_MAP[id];
-        if (mockProject) {
-            setName(mockProject.name || "");
-            setDescription(mockProject.description || "");
-            setEndDate(
-                mockProject.endDate
-                    ? new Date(mockProject.endDate).toISOString().split("T")[0]
+        if (project) {
+            setFormData({
+                name: project.name || "",
+                description: project.description || "",
+                endDate: project.endDate
+                    ? new Date(project.endDate).toISOString().split("T")[0]
                     : "",
-            );
+            });
         }
-    }, [id, navigate, role]);
+    }, [project]);
+
+    const updateProjectMutation = useMutation({
+        mutationFn: async (data: any) => {
+            await projectApi.patch(`/projects/${id}`, data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["projects"] });
+            queryClient.invalidateQueries({ queryKey: ["projects", id] });
+            navigate({ to: "/dashboard" });
+        },
+    });
+
+    const deleteProjectMutation = useMutation({
+        mutationFn: async () => {
+            await projectApi.delete(`/projects/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["projects"] });
+            navigate({ to: "/dashboard" });
+        },
+    });
+
+    const [error, setError] = useState("");
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+        });
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -67,15 +85,12 @@ function RouteComponent() {
             setError("Missing project id.");
             return;
         }
-        if (name.length < 3) {
-            setError("Project name must be at least 3 characters");
+        if (!formData.name.trim()) {
+            setError("Project name is required");
             return;
         }
 
-        setSubmitting(true);
-        setTimeout(() => {
-            navigate({ to: "/dashboard" });
-        }, 300);
+        updateProjectMutation.mutate(formData);
     };
 
     const handleDelete = () => {
@@ -83,12 +98,49 @@ function RouteComponent() {
             setError("Missing project id.");
             return;
         }
-
-        setDeleting(true);
-        setTimeout(() => {
-            navigate({ to: "/dashboard" });
-        }, 300);
+        deleteProjectMutation.mutate();
     };
+
+    if (!id) {
+        return (
+            <div className="surface">
+                <div className="empty-state text-red-700">
+                    Missing project ID.
+                </div>
+            </div>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center py-20">
+                <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+            </div>
+        );
+    }
+
+    if (!project) {
+        return (
+            <div className="surface">
+                <div className="empty-state text-red-700">
+                    Project not found.
+                </div>
+            </div>
+        );
+    }
+
+    if (project.leaderId !== userId) {
+        return (
+            <div className="surface">
+                <div className="empty-state text-red-700">
+                    Only the project leader can edit this project.
+                </div>
+            </div>
+        );
+    }
+
+    const submitting = updateProjectMutation.isPending;
+    const deleting = deleteProjectMutation.isPending;
 
     return (
         <div className="grid gap-6">
@@ -118,14 +170,14 @@ function RouteComponent() {
                     <form
                         onSubmit={handleSubmit}
                         className="mt-6 grid gap-5"
-                        noValidate
                     >
                         <div className="field">
-                            <label className="label">Project name</label>
+                            <label className="label">Project name *</label>
                             <input
                                 type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
                                 placeholder="Project name"
                                 className="input"
                             />
@@ -134,8 +186,9 @@ function RouteComponent() {
                         <div className="field">
                             <label className="label">Description</label>
                             <textarea
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
                                 placeholder="Project description"
                                 rows={4}
                                 className="textarea"
@@ -146,8 +199,9 @@ function RouteComponent() {
                             <label className="label">End date</label>
                             <input
                                 type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
+                                name="endDate"
+                                value={formData.endDate}
+                                onChange={handleChange}
                                 className="input"
                             />
                         </div>
@@ -220,3 +274,4 @@ function RouteComponent() {
         </div>
     );
 }
+

@@ -1,6 +1,21 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Param,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
 import type { Request } from 'express';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiTags,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { createUserDto } from '../utils/dto/createUserDto';
 import { loginUserDto } from '../utils/dto/loginUserDto';
@@ -33,5 +48,18 @@ export class AuthController {
   @ApiBody({ type: loginUserDto })
   login(@Body() body: loginUserDto) {
     return this.authService.login(body);
+  }
+
+  @Get('users/:userId')
+  @ApiOperation({ summary: 'Get user by ID' })
+  getUserById(@Param('userId') userId: string) {
+    return this.authService.getUserById(userId);
+  }
+
+  @Get('validate-email')
+  @ApiOperation({ summary: 'Check if email exists' })
+  @ApiQuery({ name: 'email', required: true })
+  validateEmail(@Query('email') email: string) {
+    return this.authService.checkEmail(email);
   }
 }

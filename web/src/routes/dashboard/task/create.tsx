@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { projectApi } from "../../../utils/api";
 
 export const Route = createFileRoute("/dashboard/task/create")({
     component: RouteComponent,
@@ -12,12 +14,12 @@ export const Route = createFileRoute("/dashboard/task/create")({
 function RouteComponent() {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [weight, setWeight] = useState("easy");
-    const [assignedUsername, setAssignedUsername] = useState("");
+    const [weight, setWeight] = useState("MEDIUM");
+    const [assignedTo, setAssignedTo] = useState("");
     const [deadline, setDeadline] = useState("");
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { projectId } = Route.useSearch();
     const role = localStorage.getItem("role");
 
@@ -26,6 +28,19 @@ function RouteComponent() {
             navigate({ to: "/dashboard" });
         }
     }, [navigate, role]);
+
+    const createTaskMutation = useMutation({
+        mutationFn: async (data: any) => {
+            await projectApi.post("/tasks", data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
+            navigate({ to: "/dashboard/project/$projectId", params: { projectId } });
+        },
+        onError: (err: any) => {
+            setError(err.response?.data?.message || "Failed to create task");
+        },
+    });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,16 +54,18 @@ function RouteComponent() {
             setError("Task name must be at least 3 characters");
             return;
         }
-        if (!assignedUsername) {
-            setError("Please assign this task to a member");
-            return;
-        }
 
-        setLoading(true);
-        setTimeout(() => {
-            navigate({ to: `/dashboard/project/${projectId}` });
-        }, 300);
+        createTaskMutation.mutate({
+            projectId,
+            name,
+            description,
+            weight,
+            assignedTo: assignedTo || null,
+            deadline: deadline || null,
+        });
     };
+
+    const loading = createTaskMutation.isPending;
 
     return (
         <div className="grid gap-6">
@@ -93,6 +110,7 @@ function RouteComponent() {
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="e.g., Design login page"
                                 className="input"
+                                required
                             />
                         </div>
 
@@ -113,14 +131,14 @@ function RouteComponent() {
                         </div>
 
                         <div className="field">
-                            <label className="label">Assign to</label>
+                            <label className="label">Assign to (User ID)</label>
                             <input
                                 type="text"
-                                value={assignedUsername}
+                                value={assignedTo}
                                 onChange={(e) =>
-                                    setAssignedUsername(e.target.value)
+                                    setAssignedTo(e.target.value)
                                 }
-                                placeholder="Enter member's username"
+                                placeholder="Enter member's user ID"
                                 className="input"
                             />
                         </div>
@@ -151,9 +169,9 @@ function RouteComponent() {
                                     onChange={(e) => setWeight(e.target.value)}
                                     className="select"
                                 >
-                                    <option value="easy">Easy</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="hard">Hard</option>
+                                    <option value="EASY">Easy</option>
+                                    <option value="MEDIUM">Medium</option>
+                                    <option value="HARD">Hard</option>
                                 </select>
                             </div>
                         </div>
@@ -163,7 +181,11 @@ function RouteComponent() {
                             disabled={loading}
                             className="button button--primary w-full"
                         >
-                            {loading ? "Creating..." : "Create task"}
+                            {loading ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                "Create task"
+                            )}
                         </button>
                     </form>
                 </div>
@@ -171,3 +193,4 @@ function RouteComponent() {
         </div>
     );
 }
+

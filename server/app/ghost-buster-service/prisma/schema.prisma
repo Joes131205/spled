@@ -7,7 +7,6 @@
 generator client {
   provider = "prisma-client-js"
   output   = "../../../node_modules/@spled/prisma-ghost"
-  moduleFormat  = "cjs"
 }
 
 datasource db {

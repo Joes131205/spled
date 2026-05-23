@@ -1,12 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/db/generated"
+  output   = "../../../node_modules/@spled/prisma-auth"
 }
 
 datasource db {
@@ -14,32 +8,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                   String    @id @default(uuid())
+  username             String    @unique
+  email                String    @unique
+  password             String
+  role                 Role      @default(MEMBER)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  lecturerAccessCode   String?   @unique
+  lecturerAccessExpiry DateTime?
+  avatarUrl            String?   @db.LongText
+  displayName          String?
+}
+
+model LecturerAccessToken {
+  id        String   @id @default(uuid())
+  projectId String   @unique
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
 enum Role {
   LEADER
   MEMBER
   LECTURER
-}
-
-model User {
-  id                String   @id @default(uuid())
-  username          String   @unique
-  displayName       String?
-  avatarUrl         String?  @db.LongText
-  email             String   @unique
-  password          String
-  role              Role     @default(MEMBER)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  // Lecturer access tracking (read-only view token)
-  lecturerAccessCode String? @unique
-  lecturerAccessExpiry DateTime?
-}
-
-model LecturerAccessToken {
-  id          String   @id @default(uuid())
-  projectId   String   @unique
-  token       String   @unique
-  createdAt   DateTime @default(now())
-  expiresAt   DateTime
 }

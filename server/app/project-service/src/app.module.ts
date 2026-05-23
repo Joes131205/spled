@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
+import { InvitationsModule } from './invitations/invitations.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './utils/strategy/jwt.strategy';
@@ -9,9 +10,10 @@ import { JwtStrategy } from './utils/strategy/jwt.strategy';
   imports: [
     ProjectsModule,
     TasksModule,
+    InvitationsModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'jwt-secret',
+      secret: process.env.JWT_SECRET ?? 'super-secret-perfectionist-key',
       signOptions: { expiresIn: '7d' },
     }),
   ],

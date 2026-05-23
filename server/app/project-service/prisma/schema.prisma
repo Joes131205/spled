@@ -1,18 +1,98 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../../../node_modules/@spled/prisma-project"
-  moduleFormat  = "cjs"
 }
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  leaderId    String
+  startDate   DateTime        @default(now())
+  endDate     DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  invitations Invitation[]
+  logReasons  LogReason[]
+  members     ProjectMember[]
+  tasks       Task[]
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  joinedAt  DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Invitation {
+  id         String           @id @default(uuid())
+  projectId  String
+  email      String
+  taskName   String
+  difficulty TaskWeight       @default(MEDIUM)
+  status     InvitationStatus @default(PENDING)
+  invitedBy  String
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  project    Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([email])
+}
+
+model Task {
+  id          String           @id @default(uuid())
+  projectId   String
+  name        String
+  description String?
+  weight      TaskWeight       @default(MEDIUM)
+  status      TaskStatus       @default(PENDING)
+  progress    Float            @default(0)
+  deadline    DateTime?
+  assignedTo  String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignments TaskAssignment[]
+
+  @@index([projectId])
+  @@index([assignedTo])
+}
+
+model LogReason {
+  id        String   @id @default(uuid())
+  projectId String
+  memberId  String
+  reason    String
+  kickedAt  DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([memberId])
+}
+
+model TaskAssignment {
+  id         String   @id @default(uuid())
+  taskId     String
+  memberId   String
+  assignedBy String?
+  reason     String?
+  assignedAt DateTime @default(now())
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([memberId])
 }
 
 enum TaskWeight {
@@ -27,77 +107,8 @@ enum TaskStatus {
   DONE
 }
 
-model Project {
-  id            String   @id @default(uuid())
-  name          String
-  description   String?
-  leaderId      String
-  startDate     DateTime @default(now())
-  endDate       DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  members       ProjectMember[]
-  tasks         Task[]
-  logReasons    LogReason[]
-}
-
-model ProjectMember {
-  id        String   @id @default(uuid())
-  projectId String
-  userId    String
-  joinedAt  DateTime @default(now())
-
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@unique([projectId, userId])
-  @@index([projectId])
-  @@index([userId])
-}
-
-model Task {
-  id          String      @id @default(uuid())
-  projectId   String
-  name        String
-  description String?
-  weight      TaskWeight  @default(MEDIUM)
-  status      TaskStatus  @default(PENDING)
-  progress    Float       @default(0)
-  deadline    DateTime?
-  assignedTo  String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignments TaskAssignment[]
-
-  @@index([projectId])
-  @@index([assignedTo])
-}
-
-model LogReason {
-  id        String   @id @default(uuid())
-  projectId String
-  memberId  String
-  reason    String
-  kickedAt  DateTime @default(now())
-
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@index([memberId])
-}
-
-model TaskAssignment {
-  id         String   @id @default(uuid())
-  taskId     String
-  memberId   String
-  assignedBy String?
-  reason     String?
-  assignedAt DateTime @default(now())
-
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-
-  @@index([taskId])
-  @@index([memberId])
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }

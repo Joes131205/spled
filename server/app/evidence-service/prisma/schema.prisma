@@ -7,7 +7,6 @@
 generator client {
   provider = "prisma-client-js"
   output   = "../../../node_modules/@spled/prisma-evidence"
-  moduleFormat  = "cjs"
 }
 
 datasource db {

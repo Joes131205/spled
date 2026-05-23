@@ -50,6 +50,7 @@ export class TasksService {
       where: { id: taskId },
       data: {
         status: body.status,
+        progress: body.progress ?? undefined,
       },
     });
   }

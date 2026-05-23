@@ -3,23 +3,10 @@ import {
     useNavigate,
     useParams,
 } from "@tanstack/react-router";
-import { useState } from "react";
-import { AlertCircle, ArrowLeft } from "lucide-react";
-
-const MOCK_PROJECTS_MAP: { [key: string]: any } = {
-    "1": {
-        id: "1",
-        name: "Website Redesign",
-        description: "Complete redesign of the company website",
-        endDate: "2026-06-15",
-    },
-    "2": {
-        id: "2",
-        name: "Mobile App",
-        description: "Launch iOS and Android mobile applications",
-        endDate: "2026-07-30",
-    },
-};
+import { useEffect, useState } from "react";
+import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { projectApi } from "../../../utils/api";
 
 export const Route = createFileRoute("/dashboard/project/$projectId/edit")({
     component: RouteComponent,
@@ -30,16 +17,47 @@ function RouteComponent() {
         from: "/dashboard/project/$projectId/edit",
     });
     const navigate = useNavigate();
-    const mockProject = MOCK_PROJECTS_MAP[projectId];
-    const [formData, setFormData] = useState({
-        name: mockProject?.name || "",
-        description: mockProject?.description || "",
-        endDate: mockProject?.endDate
-            ? new Date(mockProject.endDate).toISOString().split("T")[0]
-            : "",
+    const queryClient = useQueryClient();
+    const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
+    const { data: project, isLoading } = useQuery({
+        queryKey: ["projects", projectId],
+        queryFn: async () => {
+            const response = await projectApi.get(`/projects/${projectId}`);
+            return response.data;
+        },
     });
+
+    const [formData, setFormData] = useState({
+        name: "",
+        description: "",
+        endDate: "",
+    });
+
+    useEffect(() => {
+        if (project) {
+            setFormData({
+                name: project.name || "",
+                description: project.description || "",
+                endDate: project.endDate
+                    ? new Date(project.endDate).toISOString().split("T")[0]
+                    : "",
+            });
+        }
+    }, [project]);
+
+    const updateProjectMutation = useMutation({
+        mutationFn: async (data: any) => {
+            await projectApi.patch(`/projects/${projectId}`, data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["projects"] });
+            queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
+            navigate({ to: "/dashboard" });
+        },
+    });
+
     const [error, setError] = useState("");
-    const [submitting, setSubmitting] = useState(false);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -59,13 +77,18 @@ function RouteComponent() {
             return;
         }
 
-        setSubmitting(true);
-        setTimeout(() => {
-            navigate({ to: "/dashboard" });
-        }, 300);
+        updateProjectMutation.mutate(formData);
     };
 
-    if (!mockProject) {
+    if (isLoading) {
+        return (
+            <div className="flex justify-center py-20">
+                <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+            </div>
+        );
+    }
+
+    if (!project) {
         return (
             <div className="surface">
                 <div className="empty-state text-red-700">
@@ -74,6 +97,18 @@ function RouteComponent() {
             </div>
         );
     }
+
+    if (project.leaderId !== userId) {
+        return (
+            <div className="surface">
+                <div className="empty-state text-red-700">
+                    Only the project leader can edit this project.
+                </div>
+            </div>
+        );
+    }
+
+    const submitting = updateProjectMutation.isPending;
 
     return (
         <div className="grid gap-6">
@@ -156,3 +191,4 @@ function RouteComponent() {
         </div>
     );
 }
+

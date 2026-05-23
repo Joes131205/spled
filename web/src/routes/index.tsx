@@ -1,35 +1,23 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { Calendar, MoreVertical, Plus, Trash2, Edit2, LogOut, Users } from "lucide-react";
+import { Calendar, MoreVertical, Plus, Trash2, Edit2, LogOut, Users, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { projectApi } from "../utils/api";
 
 export const Route = createFileRoute("/")({
     component: RouteComponent,
 });
 
-const MOCK_PROJECTS = [
-    {
-        id: "1",
-        name: "Mobile App",
-        description: "Launch a to-do list for iOS and Android mobile applications",
-        endDate: "2026-07-30",
-        createdAt: "2026-04-15",
-        memberCount: 3,
-        role: "LEADER" as const,
-        progress: 15,
-    },
-    {
-        id: "2",
-        name: "Website Redesign",
-        description: "Complete redesign of the company website",
-        endDate: "2026-06-15",
-        createdAt: "2026-05-01",
-        memberCount: 3,
-        role: "MEMBER" as const,
-        progress: 40,
-    },
-];
-
-type Project = (typeof MOCK_PROJECTS)[number];
+interface Project {
+    id: string;
+    name: string;
+    description: string | null;
+    leaderId: string;
+    endDate: string | null;
+    createdAt: string;
+    members: { id: string; userId: string }[];
+    tasks: { id: string; status: string; progress: number }[];
+}
 
 function KebabMenu({
     project,
@@ -116,29 +104,54 @@ function KebabMenu({
 }
 
 function RouteComponent() {
-    const [projects, setProjects] = useState(MOCK_PROJECTS);
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
     }, []);
 
-    const userRole =
-        isMounted && typeof window !== "undefined"
-            ? localStorage.getItem("role") || "MEMBER"
-            : "MEMBER";
+    const userId = isMounted && typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+    const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("role") || "MEMBER" : "MEMBER";
     const isLecturer = userRole === "LECTURER";
+
+    const { data: projects = [], isLoading } = useQuery<Project[]>({
+        queryKey: ["projects"],
+        queryFn: async () => {
+            const response = await projectApi.get("/projects/my");
+            return response.data;
+        },
+        enabled: !!userId,
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await projectApi.delete(`/projects/${id}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["projects"] });
+        },
+    });
 
     const handleDelete = (id: string) => {
         if (!confirm("Are you sure you want to delete this project?")) return;
-        setProjects(projects.filter((p) => p.id !== id));
+        deleteMutation.mutate(id);
     };
 
     const handleLeave = (id: string) => {
         if (!confirm("Are you sure you want to leave this project?")) return;
-        setProjects(projects.filter((p) => p.id !== id));
+        alert("Leave functionality coming soon!");
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 text-slate-500">
+                <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
+                <p className="font-medium">Loading projects...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="grid gap-4">
@@ -189,89 +202,98 @@ function RouteComponent() {
 
             {projects.length > 0 && (
                 <div className="project-grid">
-                    {projects.map((project) => (
-                        <Link
-                            key={project.id}
-                            to="/dashboard/project/$projectId"
-                            params={{ projectId: project.id }}
-                            className="project-card"
-                        >
-                            <div className="flex items-start justify-between gap-4">
-                                <h3 className="project-card__title">{project.name}</h3>
-                                {project.role === "LEADER" ? (
-                                    <KebabMenu
-                                        project={project}
-                                        isLeader={true}
-                                        onEdit={() =>
-                                            navigate({
-                                                to: "/dashboard/project/$projectId/edit",
-                                                params: { projectId: project.id },
-                                            })
-                                        }
-                                        onDelete={() => handleDelete(project.id)}
-                                        onLeave={() => handleLeave(project.id)}
-                                    />
-                                ) : (
-                                    <button
-                                        type="button"
-                                        className="button button--leave button--compact"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            handleLeave(project.id);
-                                        }}
-                                    >
-                                        <LogOut className="h-3.5 w-3.5" />
-                                        Leave
-                                    </button>
-                                )}
-                            </div>
+                    {projects.map((project) => {
+                        const isLeader = project.leaderId === userId;
+                        const role = isLeader ? "LEADER" : "MEMBER";
+                        const memberCount = project.members.length;
+                        const progress = project.tasks && project.tasks.length > 0 
+                            ? Math.round(project.tasks.reduce((acc, t) => acc + (t.status === "DONE" ? 100 : 0), 0) / project.tasks.length)
+                            : 0;
 
-                            <p className="project-card__description line-clamp-2">
-                                {project.description || "No description yet."}
-                            </p>
+                        return (
+                            <Link
+                                key={project.id}
+                                to="/dashboard/project/$projectId"
+                                params={{ projectId: project.id }}
+                                className="project-card"
+                            >
+                                <div className="flex items-start justify-between gap-4">
+                                    <h3 className="project-card__title">{project.name}</h3>
+                                    {isLeader ? (
+                                        <KebabMenu
+                                            project={project}
+                                            isLeader={true}
+                                            onEdit={() =>
+                                                navigate({
+                                                    to: "/dashboard/project/$projectId/edit",
+                                                    params: { projectId: project.id },
+                                                })
+                                            }
+                                            onDelete={() => handleDelete(project.id)}
+                                            onLeave={() => handleLeave(project.id)}
+                                        />
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            className="button button--leave button--compact"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleLeave(project.id);
+                                            }}
+                                        >
+                                            <LogOut className="h-3.5 w-3.5" />
+                                            Leave
+                                        </button>
+                                    )}
+                                </div>
 
-                            <div className="card-role-row">
-                                <span className="role-label">Your Role:</span>
-                                <span className={`role-badge role-badge--${project.role.toLowerCase()}`}>
-                                    {project.role}
-                                </span>
-                            </div>
+                                <p className="project-card__description line-clamp-2">
+                                    {project.description || "No description yet."}
+                                </p>
 
-                            <div className="card-meta">
-                                <div className="flex items-center gap-1.5">
-                                    <span className="flex items-center gap-1.5">
-                                        <Users className="h-3.5 w-3.5" />
-                                        <span>{project.memberCount} members</span>
+                                <div className="card-role-row">
+                                    <span className="role-label">Your Role:</span>
+                                    <span className={`role-badge role-badge--${role.toLowerCase()}`}>
+                                        {role}
                                     </span>
                                 </div>
-                                {project.endDate && (
+
+                                <div className="card-meta">
                                     <div className="flex items-center gap-1.5">
-                                        <Calendar className="h-3.5 w-3.5" />
-                                        <span>
-                                            {new Date(project.endDate).toLocaleDateString("en-US", {
-                                                month: "short",
-                                                day: "numeric",
-                                                year: "numeric",
-                                            })}
+                                        <span className="flex items-center gap-1.5">
+                                            <Users className="h-3.5 w-3.5" />
+                                            <span>{memberCount} members</span>
                                         </span>
                                     </div>
-                                )}
-                            </div>
+                                    {project.endDate && (
+                                        <div className="flex items-center gap-1.5">
+                                            <Calendar className="h-3.5 w-3.5" />
+                                            <span>
+                                                {new Date(project.endDate).toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric",
+                                                })}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
 
-                            <div className="progress-section">
-                                <div className="progress-header">
-                                    <span>Progress</span>
-                                    <span>{project.progress}%</span>
+                                <div className="progress-section">
+                                    <div className="progress-header">
+                                        <span>Progress</span>
+                                        <span>{progress}%</span>
+                                    </div>
+                                    <div className="progress-track">
+                                        <div
+                                            className="progress-fill"
+                                            style={{ width: `${progress}%` }}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="progress-track">
-                                    <div
-                                        className="progress-fill"
-                                        style={{ width: `${project.progress}%` }}
-                                    />
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
+                            </Link>
+                        );
+                    })}
                 </div>
             )}
         </div>
