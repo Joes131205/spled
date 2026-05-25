@@ -76,6 +76,8 @@ function MemberRow({
         },
     });
 
+    if (user?.role === "LECTURER") return null;
+
     const initials = user?.username?.charAt(0).toUpperCase() || "?";
     const colors = ["bg-[#00008B]", "bg-green-600", "bg-yellow-500", "bg-purple-600", "bg-rose-600"];
     const colorIndex = userId ? userId.charCodeAt(0) % colors.length : 0;
@@ -557,18 +559,34 @@ function TaskRow({
     const buttonRef = React.useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
+        const handleClose = () => setMenuOpen(false);
         const handleClickOutside = (event: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setMenuOpen(false);
+                handleClose();
             }
         };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+
+        if (menuOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+            window.addEventListener("scroll", handleClose, true);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            window.removeEventListener("scroll", handleClose, true);
+        };
+    }, [menuOpen]);
 
     return (
         <tr className="hover:bg-gray-50/50 transition-colors">
-            <td className="px-6 py-4 font-medium text-gray-800">{task.name}</td>
+            <td className="px-6 py-4">
+                <div className="font-medium text-gray-800">{task.name}</div>
+                {task.description && (
+                    <div className="text-xs text-gray-400 font-normal mt-0.5 max-w-xs truncate" title={task.description}>
+                        {task.description}
+                    </div>
+                )}
+            </td>
             <td className="px-4 py-4">
                 <span className={`inline-flex px-2.5 py-0.5 rounded text-xs font-semibold ${diff.cls}`}>
                     {diff.label}
@@ -673,7 +691,7 @@ function TaskRow({
                 </div>
             </td>
             {isLeader && (
-                <td className="px-4 py-4 w-16 text-right">
+                <td className="px-4 py-4 w-16 text-right relative">
                     <button
                         ref={buttonRef}
                         onClick={(e) => {
@@ -687,21 +705,22 @@ function TaskRow({
                     {menuOpen && (
                         <div
                             ref={menuRef}
-                            className="absolute right-0 top-full mt-1 bg-white border border-gray-100 shadow-xl rounded-lg py-1 w-28 z-[60] animate-in fade-in zoom-in-95 duration-100"
+                            className="absolute right-6 top-12 bg-white border border-gray-100 shadow-2xl rounded-xl py-1.5 w-32 z-[100] animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5"
                         >
                             <Link
                                 to={`/dashboard/task/${task.id}/edit`}
-                                className="flex items-center gap-2 px-3 py-2 text-xs text-gray-600 hover:bg-gray-50 transition-colors w-full"
+                                className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50 hover:text-[#00008B] transition-colors w-full"
                             >
-                                <Edit2 className="h-3 w-3" />
-                                Edit
+                                <Edit2 className="h-3.5 w-3.5" />
+                                Edit Task
                             </Link>
+                            <div className="h-px bg-gray-50 mx-2 my-1" />
                             <button
                                 onClick={() => { setMenuOpen(false); onDelete(); }}
-                                className="flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors w-full"
+                                className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-500 hover:bg-rose-50 transition-colors w-full"
                             >
-                                <Trash2 className="h-3 w-3" />
-                                Delete
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Delete Task
                             </button>
                         </div>
                     )}
@@ -797,7 +816,7 @@ function RouteComponent() {
 
     const deleteTaskMutation = useMutation({
         mutationFn: async (taskId: string) => {
-            await projectApi.delete(`/projects/${projectId}/tasks/${taskId}`);
+            await projectApi.delete(`/tasks/${taskId}`);
         },
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects", projectId] }),
     });

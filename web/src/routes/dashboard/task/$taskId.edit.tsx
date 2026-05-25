@@ -4,11 +4,8 @@ import { AlertCircle, ArrowLeft, Loader2, Check, ChevronDown } from "lucide-reac
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { projectApi, authApi } from "../../../utils/api";
 
-export const Route = createFileRoute("/dashboard/task/create")({
+export const Route = createFileRoute("/dashboard/task/$taskId/edit")({
     component: RouteComponent,
-    validateSearch: (search: Record<string, any>) => ({
-        projectId: typeof search.projectId === "string" ? search.projectId : "",
-    }),
 });
 
 function MemberOption({ userId, isSelected, onSelect }: { userId: string, isSelected: boolean, onSelect: () => void }) {
@@ -44,6 +41,7 @@ function MemberOption({ userId, isSelected, onSelect }: { userId: string, isSele
 }
 
 function RouteComponent() {
+    const { taskId } = Route.useParams();
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [weight, setWeight] = useState("MEDIUM");
@@ -58,7 +56,6 @@ function RouteComponent() {
 
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { projectId } = Route.useSearch();
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
@@ -69,13 +66,21 @@ function RouteComponent() {
         return () => document.removeEventListener("mousedown", handler);
     }, []);
 
-    const { data: project, isLoading: isProjectLoading } = useQuery({
-        queryKey: ["projects", projectId],
+    const { data: task, isLoading: isTaskLoading } = useQuery({
+        queryKey: ["tasks", taskId],
         queryFn: async () => {
-            const response = await projectApi.get(`/projects/${projectId}`);
+            const response = await projectApi.get(`/tasks/detail/${taskId}`);
             return response.data;
         },
-        enabled: !!projectId,
+    });
+
+    const { data: project } = useQuery({
+        queryKey: ["projects", task?.projectId],
+        queryFn: async () => {
+            const response = await projectApi.get(`/projects/${task.projectId}`);
+            return response.data;
+        },
+        enabled: !!task?.projectId,
     });
 
     const { data: assignedUser } = useQuery({
@@ -87,16 +92,30 @@ function RouteComponent() {
         enabled: !!assignedTo,
     });
 
-    const createTaskMutation = useMutation({
+    useEffect(() => {
+        if (task) {
+            setName(task.name);
+            setDescription(task.description || "");
+            setWeight(task.weight);
+            setAssignedTo(task.assignedTo || "");
+        }
+    }, [task]);
+
+    const updateTaskMutation = useMutation({
         mutationFn: async (data: any) => {
-            await projectApi.post("/tasks", data);
+            await projectApi.patch(`/tasks/${taskId}`, data);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
-            navigate({ to: "/dashboard/project/$projectId", params: { projectId } });
+            queryClient.invalidateQueries({ queryKey: ["tasks", taskId] });
+            if (task?.projectId) {
+                queryClient.invalidateQueries({ queryKey: ["projects", task.projectId] });
+                navigate({ to: "/dashboard/project/$projectId", params: { projectId: task.projectId } });
+            } else {
+                navigate({ to: "/dashboard" });
+            }
         },
         onError: (err: any) => {
-            setError(err.response?.data?.message || "Failed to create task");
+            setError(err.response?.data?.message || "Failed to update task");
         },
     });
 
@@ -104,17 +123,12 @@ function RouteComponent() {
         e.preventDefault();
         setError("");
 
-        if (!projectId) {
-            setError("Missing project id.");
-            return;
-        }
         if (name.length < 3) {
             setError("Task name must be at least 3 characters");
             return;
         }
 
-        createTaskMutation.mutate({
-            projectId,
+        updateTaskMutation.mutate({
             name,
             description,
             weight,
@@ -130,16 +144,21 @@ function RouteComponent() {
 
     const activeWeight = weights.find(w => w.id === weight) || weights[1];
 
-    const loading = createTaskMutation.isPending || isProjectLoading;
+    if (isTaskLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Loader2 className="h-10 w-10 animate-spin text-[#00008B]" />
+            </div>
+        );
+    }
 
     return (
         <div className="grid gap-6">
             <button
                 onClick={() =>
-                    navigate({
-                        to: "/dashboard/project/$projectId",
-                        params: { projectId },
-                    })
+                    task?.projectId 
+                        ? navigate({ to: "/dashboard/project/$projectId", params: { projectId: task.projectId } })
+                        : navigate({ to: "/dashboard" })
                 }
                 className="back-link w-fit"
             >
@@ -150,9 +169,9 @@ function RouteComponent() {
             <div className="surface">
                 <div className="surface__body max-w-2xl">
                     <p className="kicker">Task</p>
-                    <h1 className="page-title">Create new task</h1>
+                    <h1 className="page-title">Edit task</h1>
                     <p className="page-subtitle mt-3">
-                        Assign work to a teammate and keep the project moving.
+                        Update task details and assignments.
                     </p>
 
                     {error && (
@@ -313,13 +332,13 @@ function RouteComponent() {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={updateTaskMutation.isPending}
                             className="button button--primary w-full mt-4 h-12 text-base font-bold shadow-lg shadow-indigo-100"
                         >
-                            {createTaskMutation.isPending ? (
+                            {updateTaskMutation.isPending ? (
                                 <Loader2 className="h-5 w-5 animate-spin" />
                             ) : (
-                                "Create task"
+                                "Update task"
                             )}
                         </button>
                     </form>

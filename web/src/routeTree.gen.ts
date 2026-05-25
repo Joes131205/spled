@@ -22,6 +22,7 @@ import { Route as DashboardProfileEditRouteImport } from './routes/dashboard/pro
 import { Route as DashboardProfileDisplayRouteImport } from './routes/dashboard/profile/display'
 import { Route as DashboardInvitationsPendingRouteImport } from './routes/dashboard/invitations/pending'
 import { Route as DashboardInvitationsHistoryRouteImport } from './routes/dashboard/invitations/history'
+import { Route as DashboardTaskTaskIdEditRouteImport } from './routes/dashboard/task/$taskId.edit'
 import { Route as DashboardProjectProjectIdEditRouteImport } from './routes/dashboard/project/$projectId.edit'
 
 const SignupRoute = SignupRouteImport.update({
@@ -92,6 +93,11 @@ const DashboardInvitationsHistoryRoute =
     path: '/dashboard/invitations/history',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DashboardTaskTaskIdEditRoute = DashboardTaskTaskIdEditRouteImport.update({
+  id: '/dashboard/task/$taskId/edit',
+  path: '/dashboard/task/$taskId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardProjectProjectIdEditRoute =
   DashboardProjectProjectIdEditRouteImport.update({
     id: '/edit',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/task/create': typeof DashboardTaskCreateRoute
   '/dashboard/task/create-new': typeof DashboardTaskCreateNewRoute
   '/dashboard/project/$projectId/edit': typeof DashboardProjectProjectIdEditRoute
+  '/dashboard/task/$taskId/edit': typeof DashboardTaskTaskIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/dashboard/task/create': typeof DashboardTaskCreateRoute
   '/dashboard/task/create-new': typeof DashboardTaskCreateNewRoute
   '/dashboard/project/$projectId/edit': typeof DashboardProjectProjectIdEditRoute
+  '/dashboard/task/$taskId/edit': typeof DashboardTaskTaskIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/dashboard/task/create': typeof DashboardTaskCreateRoute
   '/dashboard/task/create-new': typeof DashboardTaskCreateNewRoute
   '/dashboard/project/$projectId/edit': typeof DashboardProjectProjectIdEditRoute
+  '/dashboard/task/$taskId/edit': typeof DashboardTaskTaskIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/dashboard/task/create'
     | '/dashboard/task/create-new'
     | '/dashboard/project/$projectId/edit'
+    | '/dashboard/task/$taskId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/dashboard/task/create'
     | '/dashboard/task/create-new'
     | '/dashboard/project/$projectId/edit'
+    | '/dashboard/task/$taskId/edit'
   id:
     | '__root__'
     | '/'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/dashboard/task/create'
     | '/dashboard/task/create-new'
     | '/dashboard/project/$projectId/edit'
+    | '/dashboard/task/$taskId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -213,6 +225,7 @@ export interface RootRouteChildren {
   DashboardProjectEditRoute: typeof DashboardProjectEditRoute
   DashboardTaskCreateRoute: typeof DashboardTaskCreateRoute
   DashboardTaskCreateNewRoute: typeof DashboardTaskCreateNewRoute
+  DashboardTaskTaskIdEditRoute: typeof DashboardTaskTaskIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -308,6 +321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardInvitationsHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/task/$taskId/edit': {
+      id: '/dashboard/task/$taskId/edit'
+      path: '/dashboard/task/$taskId/edit'
+      fullPath: '/dashboard/task/$taskId/edit'
+      preLoaderRoute: typeof DashboardTaskTaskIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/project/$projectId/edit': {
       id: '/dashboard/project/$projectId/edit'
       path: '/edit'
@@ -346,6 +366,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardProjectEditRoute: DashboardProjectEditRoute,
   DashboardTaskCreateRoute: DashboardTaskCreateRoute,
   DashboardTaskCreateNewRoute: DashboardTaskCreateNewRoute,
+  DashboardTaskTaskIdEditRoute: DashboardTaskTaskIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

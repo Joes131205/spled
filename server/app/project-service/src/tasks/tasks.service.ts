@@ -9,13 +9,17 @@ import { updateStatusDto } from '../utils/dto/updateStatusDto';
 import { updateWeightDto } from '../utils/dto/updateWeightDto';
 import { assignTaskDto } from '../utils/dto/assignTaskDto';
 import { unassignTaskDto } from '../utils/dto/unassignTaskDto';
+import { updateTaskDto } from '../utils/dto/updateTaskDto';
 
 const db = prisma;
 @Injectable()
 export class TasksService {
   async createTask(body: createTaskDto) {
     return await db.task.create({
-      data: body,
+      data: {
+        ...body,
+        deadline: body.deadline ? new Date(body.deadline) : null,
+      },
     });
   }
 
@@ -42,6 +46,33 @@ export class TasksService {
     return db.taskAssignment.findMany({
       where: { taskId },
       orderBy: { assignedAt: 'desc' },
+    });
+  }
+
+  async updateTask(taskId: string, body: updateTaskDto) {
+    await this.getTaskById(taskId);
+    
+    const data: any = { ...body };
+    if (body.deadline !== undefined) {
+      data.deadline = body.deadline ? new Date(body.deadline) : null;
+    }
+
+    return db.task.update({
+      where: { id: taskId },
+      data: data,
+    });
+  }
+
+  async deleteTask(taskId: string) {
+    await this.getTaskById(taskId);
+    
+    // Also delete task assignments
+    await db.taskAssignment.deleteMany({
+      where: { taskId },
+    });
+
+    return db.task.delete({
+      where: { id: taskId },
     });
   }
 
