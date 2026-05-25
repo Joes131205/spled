@@ -1,24 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { type FormEvent, useState } from "react";
-import { AlertCircle, ArrowRight, Layout, UserPlus } from "lucide-react";
+import { type FormEvent, useState, useEffect } from "react";
+import { AlertCircle, UserPlus, X, CheckCircle2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { authApi } from "../utils/api";
-import { z } from "zod";
 
 export const Route = createFileRoute("/signup")({
     component: RouteComponent,
-});
-
-const signupSchema = z.object({
-    firstName: z.string().min(2, "First name must be at least 2 characters"),
-    lastName: z.string().min(2, "Last name must be at least 2 characters"),
-    email: z.string().email("Please enter a valid email address"),
-    password: z.string().min(4, "Password must be at least 4 characters"),
-    confirmPassword: z.string(),
-    role: z.enum(["student", "lecturer"]),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
 });
 
 function RouteComponent() {
@@ -28,13 +15,19 @@ function RouteComponent() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [role, setRole] = useState<"student" | "lecturer">("student");
-    const [validationError, setValidationError] = useState<string | null>(null);
+    
+    // Validation States
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [emailStatus, setEmailStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+    const [generalError, setGeneralError] = useState<string | null>(null);
+    
     const navigate = useNavigate();
 
+    // Signup Mutation
     const signupMutation = useMutation({
         mutationFn: async () => {
             const response = await authApi.post("/auth/register", {
-                username: `${firstName}${lastName}`.toLowerCase().replace(/\s/g, ""),
+                username: `${firstName}${lastName || ""}`.toLowerCase().replace(/\s/g, ""),
                 email,
                 password,
                 role: role === "student" ? "MEMBER" : "LECTURER",
@@ -44,29 +37,91 @@ function RouteComponent() {
         onSuccess: () => {
             navigate({ to: "/login" });
         },
-        onError: () => {
-            setValidationError(null);
+        onError: (err: any) => {
+            const msg = err.response?.data?.message || "Registration failed. Please try again.";
+            setGeneralError(msg);
         }
     });
 
+    // Real-time Email Check
+    useEffect(() => {
+        const checkEmail = async () => {
+            if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+                setEmailStatus("idle");
+                return;
+            }
+
+            setEmailStatus("checking");
+            try {
+                const response = await authApi.get(`/auth/validate-email?email=${email}`);
+                if (response.data.exists) {
+                    setEmailStatus("taken");
+                    setErrors(prev => ({ ...prev, email: "This email is already registered" }));
+                } else {
+                    setEmailStatus("available");
+                    setErrors(prev => {
+                        const newErr = { ...prev };
+                        delete newErr.email;
+                        return newErr;
+                    });
+                }
+            } catch (err) {
+                setEmailStatus("idle");
+            }
+        };
+
+        const timer = setTimeout(checkEmail, 500);
+        return () => clearTimeout(timer);
+    }, [email]);
+
     const handleSignup = (e: FormEvent) => {
         e.preventDefault();
-        setValidationError(null);
-
-        const result = signupSchema.safeParse({ firstName, lastName, email, password, confirmPassword, role });
-        if (!result.success) {
-            setValidationError(result.error.errors[0].message);
-            return;
+        setGeneralError(null);
+        
+        const newErrors: Record<string, string> = {};
+        
+        if (firstName.trim().length < 3) {
+            newErrors.firstName = "First name must be at least 3 characters";
+        }
+        
+        if (!email.trim()) {
+            newErrors.email = "Email address is required";
+        } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+            newErrors.email = "Please enter a valid email address";
+        } else if (emailStatus === "taken") {
+            newErrors.email = "This email is already registered";
         }
 
-        signupMutation.mutate();
+        if (!password) {
+            newErrors.password = "Password is required";
+        } else if (password.length < 4) {
+            newErrors.password = "Password must be at least 4 characters";
+        }
+
+        if (password !== confirmPassword) {
+            newErrors.confirmPassword = "Passwords do not match";
+        }
+
+        setErrors(newErrors);
+
+        if (Object.keys(newErrors).length === 0) {
+            signupMutation.mutate();
+        }
     };
 
-    const serverError = signupMutation.error && (signupMutation.error as any).response?.data?.message;
-    const displayError = validationError || (Array.isArray(serverError) ? serverError[0] : serverError) || (signupMutation.isError ? "Registration failed" : null);
+    const clearError = (field: string) => {
+        if (errors[field]) {
+            setErrors(prev => {
+                const updated = { ...prev };
+                delete updated[field];
+                return updated;
+            });
+        }
+    };
 
     return (
         <div className="min-h-screen flex">
+            {/* Left Side: Branding - Restored to match login page exactly */}
             <div
                 className="hidden lg:flex lg:w-[58%] xl:w-[62%] flex-col items-center justify-center relative overflow-hidden"
                 style={{
@@ -122,10 +177,10 @@ function RouteComponent() {
                             </div>
                         ))}
                     </div>
-
                 </div>
             </div>
 
+            {/* Right Side: Form */}
             <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-20 bg-white overflow-y-auto">
                 <div className="w-full max-w-sm mx-auto py-10">
                     <p className="text-xs font-bold tracking-widest uppercase text-indigo-700 mb-1">
@@ -140,10 +195,15 @@ function RouteComponent() {
                     </p>
 
                     <form onSubmit={handleSignup} className="mt-8 flex flex-col gap-5" noValidate>
-                        {displayError && (
-                            <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700">
-                                <AlertCircle className="h-4 w-4 shrink-0" />
-                                <p className="text-sm">{displayError}</p>
+                        {generalError && (
+                            <div className="flex items-center justify-between gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700">
+                                <div className="flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4 shrink-0" />
+                                    <p className="text-sm font-medium">{generalError}</p>
+                                </div>
+                                <button type="button" onClick={() => setGeneralError(null)} className="text-red-400 hover:text-red-600">
+                                    <X className="h-4 w-4" />
+                                </button>
                             </div>
                         )}
 
@@ -153,35 +213,52 @@ function RouteComponent() {
                                 <input
                                     type="text"
                                     value={firstName}
-                                    onChange={(e) => setFirstName(e.target.value)}
+                                    onChange={(e) => { setFirstName(e.target.value); clearError("firstName"); }}
                                     placeholder="Alex"
-                                    required
-                                    className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition"
+                                    className={`rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
+                                        errors.firstName ? "border-red-500 bg-red-50/30 focus:ring-red-100" : "border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                                    }`}
                                 />
+                                {errors.firstName && (
+                                    <p className="text-[10px] text-red-600 font-bold uppercase tracking-wide flex items-center gap-1 mt-0.5">
+                                        <AlertCircle className="h-2.5 w-2.5" />
+                                        {errors.firstName}
+                                    </p>
+                                )}
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-medium text-slate-700">Last name</label>
+                                <label className="text-sm font-medium text-slate-700">Last name <span className="text-slate-400 font-normal">(opt)</span></label>
                                 <input
                                     type="text"
                                     value={lastName}
                                     onChange={(e) => setLastName(e.target.value)}
                                     placeholder="Rivera"
-                                    required
                                     className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition"
                                 />
                             </div>
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-medium text-slate-700">Email address</label>
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-slate-700">Email address</label>
+                                {emailStatus === "checking" && <span className="text-[10px] font-bold text-slate-400 animate-pulse">Verifying...</span>}
+                                {emailStatus === "available" && <div className="flex items-center gap-1 text-emerald-500 font-bold text-[10px]"><CheckCircle2 className="h-3 w-3" /> AVAILABLE</div>}
+                            </div>
                             <input
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => { setEmail(e.target.value); clearError("email"); }}
                                 placeholder="you@example.com"
-                                required
-                                className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition"
+                                className={`rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
+                                    errors.email ? "border-red-500 bg-red-50/30 focus:ring-red-100" : "border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                                }`}
                             />
+                            {errors.email && (
+                                <p className="text-[10px] text-red-600 font-bold uppercase tracking-wide flex items-center gap-1 mt-0.5">
+                                    <AlertCircle className="h-2.5 w-2.5" />
+                                    {errors.email}
+                                </p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-1.5">
@@ -189,11 +266,18 @@ function RouteComponent() {
                             <input
                                 type="password"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="At least 8 characters"
-                                required
-                                className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition"
+                                onChange={(e) => { setPassword(e.target.value); clearError("password"); clearError("confirmPassword"); }}
+                                placeholder="At least 4 characters"
+                                className={`rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
+                                    errors.password ? "border-red-500 bg-red-50/30 focus:ring-red-100" : "border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                                }`}
                             />
+                            {errors.password && (
+                                <p className="text-[10px] text-red-600 font-bold uppercase tracking-wide flex items-center gap-1 mt-0.5">
+                                    <AlertCircle className="h-2.5 w-2.5" />
+                                    {errors.password}
+                                </p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-1.5">
@@ -201,11 +285,18 @@ function RouteComponent() {
                             <input
                                 type="password"
                                 value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                onChange={(e) => { setConfirmPassword(e.target.value); clearError("confirmPassword"); }}
                                 placeholder="Repeat your password"
-                                required
-                                className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 transition"
+                                className={`rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
+                                    errors.confirmPassword ? "border-red-500 bg-red-50/30 focus:ring-red-100" : "border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                                }`}
                             />
+                            {errors.confirmPassword && (
+                                <p className="text-[10px] text-red-600 font-bold uppercase tracking-wide flex items-center gap-1 mt-0.5">
+                                    <AlertCircle className="h-2.5 w-2.5" />
+                                    {errors.confirmPassword}
+                                </p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -237,7 +328,7 @@ function RouteComponent() {
                                     </button>
                                 ))}
                             </div>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 leading-relaxed mt-1">
                                 As a <span className="font-semibold capitalize text-indigo-700">{role}</span>,{" "}
                                 {role === "student"
                                     ? "you can join projects as a Leader or Member — you choose your role per project."
@@ -248,7 +339,7 @@ function RouteComponent() {
                         <button
                             type="submit"
                             disabled={signupMutation.isPending}
-                            className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-[#00008B] px-4 py-3 text-sm font-semibold text-white hover:bg-[#000066] disabled:opacity-60 transition"
+                            className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-[#00008B] px-4 py-3.5 text-sm font-semibold text-white hover:bg-[#000066] disabled:opacity-60 shadow-lg shadow-indigo-100 transition-all active:scale-[0.98]"
                         >
                             <UserPlus className="h-4 w-4" />
                             {signupMutation.isPending ? "Creating account…" : "Create account"}
@@ -261,16 +352,16 @@ function RouteComponent() {
                         <div className="flex-1 border-t border-slate-200" />
                     </div>
 
-                    <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+                    <button type="button" className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
                         <img src="https://www.google.com/favicon.ico" alt="Google" className="h-4 w-4" />
                         Sign up with Google
                     </button>
 
-                    <p className="mt-4 text-center text-xs text-slate-400">
+                    <p className="mt-6 text-center text-xs font-medium text-slate-400">
                         By creating an account you agree to our{" "}
-                        <a href="#" className="underline hover:text-slate-600">Terms of Service</a>{" "}
+                        <a href="#" className="text-slate-600 underline hover:text-indigo-600 transition-colors">Terms of Service</a>{" "}
                         and{" "}
-                        <a href="#" className="underline hover:text-slate-600">Privacy Policy</a>
+                        <a href="#" className="text-slate-600 underline hover:text-indigo-600 transition-colors">Privacy Policy</a>
                     </p>
                 </div>
             </div>

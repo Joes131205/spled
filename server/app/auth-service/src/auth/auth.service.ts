@@ -110,6 +110,7 @@ export class AuthService {
     });
     return { 
       exists: !!user,
+      id: user?.id,
       role: user?.role
     };
   }

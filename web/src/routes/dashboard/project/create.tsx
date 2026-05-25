@@ -117,12 +117,20 @@ function RouteComponent() {
 
         const newFieldErrors: Record<string, string> = {};
 
-        if (formData.name.trim().length < 4) {
+        if (!formData.name.trim()) {
+            newFieldErrors.name = "Project name is required";
+        } else if (formData.name.trim().length < 4) {
             newFieldErrors.name = "Project name must be at least 4 characters";
+        } else if (formData.name.length > 30) {
+            newFieldErrors.name = "Project name must be at most 30 characters";
+        }
+
+        if (formData.description.length > 80) {
+            newFieldErrors.description = "Description must be at most 80 characters";
         }
 
         if (!formData.endDate) {
-            newFieldErrors.endDate = "Deadline is mandatory";
+            newFieldErrors.endDate = "A deadline is required";
         }
 
         const validMembers = teamMembers.filter(m => m.task.trim() || m.email.trim());
@@ -131,10 +139,15 @@ function RouteComponent() {
             const member = teamMembers[i];
             
             if (i === 0 || member.task.trim() || member.email.trim()) {
-                if (member.task.trim().length < 4) {
+                if (!member.task.trim()) {
+                    newFieldErrors[`member.${i}.task`] = "Task name is required";
+                } else if (member.task.trim().length < 4) {
                     newFieldErrors[`member.${i}.task`] = "Task name must be at least 4 characters";
                 }
-                if (!member.email.trim() || !/^\S+@\S+\.\S+$/.test(member.email)) {
+                
+                if (!member.email.trim()) {
+                    newFieldErrors[`member.${i}.email`] = "Email is required";
+                } else if (!/^\S+@\S+\.\S+$/.test(member.email)) {
                     newFieldErrors[`member.${i}.email`] = "Please provide a valid email";
                 } else {
                     try {
@@ -188,43 +201,67 @@ function RouteComponent() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="grid gap-6">
+                    <form onSubmit={handleSubmit} className="grid gap-6" noValidate>
                         <div className="grid gap-4">
                             <div className="field">
-                                <label className="label text-base font-semibold mb-1.5">Project name *</label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="label text-base font-semibold">Project name *</label>
+                                    <span className={`text-[10px] font-bold ${formData.name.length === 30 ? 'text-rose-500' : 'text-slate-400'}`}>
+                                        {formData.name.length}/30
+                                    </span>
+                                </div>
                                 <input
                                     type="text"
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
                                     placeholder="e.g., Website redesign"
-                                    className={`input text-sm py-3 px-5 ${fieldErrors.name ? "border-red-500 focus:border-red-600 focus:ring-red-100" : ""}`}
-                                    required
+                                    maxLength={30}
+                                    className={`input text-sm py-3 px-5 transition-all ${fieldErrors.name ? "border-rose-500 bg-rose-50/30 focus:border-rose-600 focus:ring-rose-100" : ""}`}
                                 />
                                 {fieldErrors.name ? (
-                                    <p className="text-red-500 text-[10px] mt-1 font-bold uppercase">{fieldErrors.name}</p>
+                                    <p className="text-rose-500 text-[10px] mt-1.5 font-bold uppercase tracking-wide flex items-center gap-1">
+                                        <AlertCircle className="h-3 w-3" />
+                                        {fieldErrors.name}
+                                    </p>
                                 ) : (
-                                    <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tight">Minimum 4 characters</p>
+                                    <p className="text-[10px] text-slate-400 mt-1.5 uppercase font-bold tracking-tight">Minimum 4 characters</p>
                                 )}
                             </div>
 
                             <div className="field">
-                                <label className="label text-base font-semibold mb-1.5">Description (optional)</label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="label text-base font-semibold">Description (optional)</label>
+                                    <span className={`text-[10px] font-bold ${formData.description.length === 80 ? 'text-rose-500' : 'text-slate-400'}`}>
+                                        {formData.description.length}/80
+                                    </span>
+                                </div>
                                 <textarea
                                     name="description"
                                     value={formData.description}
                                     onChange={handleChange}
                                     placeholder="Describe the project goals and scope"
                                     rows={2}
-                                    className="textarea text-sm py-3 px-5"
+                                    maxLength={80}
+                                    className={`textarea text-sm py-3 px-5 transition-all ${fieldErrors.description ? "border-rose-500 bg-rose-50/30" : ""}`}
                                 />
+                                {fieldErrors.description && (
+                                    <p className="text-rose-500 text-[10px] mt-1.5 font-bold uppercase tracking-wide flex items-center gap-1">
+                                        <AlertCircle className="h-3 w-3" />
+                                        {fieldErrors.description}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="field">
                                 <label className="label text-base font-semibold mb-3">Team & Tasks</label>
                                 <div className="grid gap-3 max-h-[350px] overflow-y-auto pr-2">
                                     {teamMembers.map((member, index) => (
-                                        <div key={index} className="flex flex-wrap items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100 relative group">
+                                        <div key={index} className={`flex flex-wrap items-start gap-3 p-4 rounded-2xl border transition-all relative group ${
+                                            fieldErrors[`member.${index}.task`] || fieldErrors[`member.${index}.email`] 
+                                                ? "bg-rose-50/30 border-rose-200" 
+                                                : "bg-slate-50 border-slate-100"
+                                        }`}>
                                             <div className="flex-1 min-w-[190px]">
                                                 <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1 block">Task (min 4 chars)</label>
                                                 <input
@@ -232,10 +269,13 @@ function RouteComponent() {
                                                     value={member.task}
                                                     onChange={(e) => handleTeamMemberChange(index, "task", e.target.value)}
                                                     placeholder="Task name"
-                                                    className={`input py-2 px-4 bg-white text-sm ${fieldErrors[`member.${index}.task`] ? "border-red-500 focus:border-red-600" : ""}`}
+                                                    className={`input py-2 px-4 bg-white text-sm ${fieldErrors[`member.${index}.task`] ? "border-rose-500 focus:border-rose-600" : ""}`}
                                                 />
                                                 {fieldErrors[`member.${index}.task`] && (
-                                                    <p className="text-red-500 text-[9px] mt-1 font-bold uppercase">{fieldErrors[`member.${index}.task`]}</p>
+                                                    <p className="text-rose-500 text-[9px] mt-1.5 font-bold uppercase tracking-wide flex items-center gap-1">
+                                                        <AlertCircle className="h-2.5 w-2.5" />
+                                                        {fieldErrors[`member.${index}.task`]}
+                                                    </p>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-[190px]">
@@ -251,11 +291,14 @@ function RouteComponent() {
                                                     className={`input py-2 px-4 text-sm ${
                                                         index === 0 
                                                             ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200" 
-                                                            : `bg-white ${fieldErrors[`member.${index}.email`] ? "border-red-500 focus:border-red-600" : ""}`
+                                                            : `bg-white ${fieldErrors[`member.${index}.email`] ? "border-rose-500 focus:border-rose-600" : ""}`
                                                     }`}
                                                 />
                                                 {fieldErrors[`member.${index}.email`] && (
-                                                    <p className="text-red-500 text-[9px] mt-1 font-bold uppercase">{fieldErrors[`member.${index}.email`]}</p>
+                                                    <p className="text-rose-500 text-[9px] mt-1.5 font-bold uppercase tracking-wide flex items-center gap-1">
+                                                        <AlertCircle className="h-2.5 w-2.5" />
+                                                        {fieldErrors[`member.${index}.email`]}
+                                                    </p>
                                                 )}
                                             </div>
                                             <div className="w-fit">
@@ -309,11 +352,15 @@ function RouteComponent() {
                                     name="endDate"
                                     value={formData.endDate}
                                     onChange={handleChange}
-                                    className={`input text-sm py-3 px-5 ${fieldErrors.endDate ? "border-red-500 focus:border-red-600" : ""}`}
-                                    required
+                                    className={`input text-sm py-3 px-5 transition-all ${fieldErrors.endDate ? "border-rose-500 bg-rose-50/30 focus:border-rose-600 focus:ring-rose-100" : ""}`}
                                 />
-                                {fieldErrors.endDate && (
-                                    <p className="text-red-500 text-[10px] mt-1 font-bold uppercase">{fieldErrors.endDate}</p>
+                                {fieldErrors.endDate ? (
+                                    <p className="text-rose-500 text-[10px] mt-1.5 font-bold uppercase tracking-wide flex items-center gap-1">
+                                        <AlertCircle className="h-3 w-3" />
+                                        {fieldErrors.endDate}
+                                    </p>
+                                ) : (
+                                    <p className="text-[10px] text-slate-400 mt-1.5 uppercase font-bold tracking-tight">Required for tracking</p>
                                 )}
                             </div>
                         </div>

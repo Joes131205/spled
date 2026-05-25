@@ -40,6 +40,14 @@ interface ProjectMember {
     joinedAt: string;
 }
 
+interface LogReason {
+    id: string;
+    projectId: string;
+    memberId: string;
+    reason: string;
+    kickedAt: string;
+}
+
 interface Invitation {
     id: string;
     email: string;
@@ -57,6 +65,7 @@ interface Project {
     members: ProjectMember[];
     invitations: Invitation[];
     tasks: Task[];
+    logReasons: LogReason[];
 }
 
 function MemberRow({
@@ -109,13 +118,58 @@ function MemberRow({
                 )}
                 {canKick && !isLeader && (
                     <button
-                        onClick={onKick}
+                        onClick={() => onKick?.(user?.username || "this member")}
                         className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
                     >
                         <UserMinus className="h-3.5 w-3.5" />
                         Kick
                     </button>
                 )}
+            </div>
+        </div>
+    );
+}
+
+function KickLogRow({ log }: { log: LogReason }) {
+    const { data: user } = useQuery({
+        queryKey: ["user", log.memberId],
+        queryFn: async () => {
+            const response = await authApi.get(`/auth/users/${log.memberId}`);
+            return response.data;
+        },
+    });
+
+    return (
+        <div className="flex items-start gap-4 px-7 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+            {user?.avatarUrl ? (
+                <img 
+                    src={user.avatarUrl} 
+                    alt={user.username} 
+                    className="h-9 w-9 rounded-full object-cover border border-gray-100 shrink-0"
+                />
+            ) : (
+                <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
+                    <UserMinus className="h-4 w-4" />
+                </div>
+            )}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-bold text-gray-900">
+                        {user?.username || "Loading..."} was kicked
+                    </p>
+                    <span className="text-[10px] font-medium text-gray-400 whitespace-nowrap">
+                        {new Date(log.kickedAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        })}
+                    </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed italic">
+                    "{log.reason}"
+                </p>
             </div>
         </div>
     );
@@ -744,6 +798,18 @@ function RouteComponent() {
     const [inviteError, setInviteError] = useState("");
     const [isLecturer, setIsLecturer] = useState(false);
 
+    const [kickModal, setKickModal] = useState<{
+        isOpen: boolean;
+        memberId: string;
+        username: string;
+        reason: string;
+    }>({
+        isOpen: false,
+        memberId: "",
+        username: "",
+        reason: "",
+    });
+
     useEffect(() => {
         setIsMounted(true);
     }, []);
@@ -782,20 +848,44 @@ function RouteComponent() {
     const handleInviteEmailChange = async (email: string) => {
         setInviteEmail(email);
         setInviteError("");
-        if (/^\S+@\S+\.\S+$/.test(email)) {
-            try {
-                const response = await authApi.get(`/auth/validate-email?email=${email}`);
-                if (!response.data.exists) {
-                    setInviteError("Email is not registered");
-                    setIsLecturer(false);
-                } else {
-                    setIsLecturer(response.data.role === "LECTURER");
-                }
-            } catch (err) {
-                // Ignore validation errors while typing
+        
+        if (!email) return;
+
+        const emailRegex = /^\S+@\S+\.\S+$/;
+
+        if (!emailRegex.test(email)) {
+            // Only show format error if they've started typing something that looks like an email or it's long
+            if (email.includes("@") || email.length > 5) {
+                setInviteError("Please enter a valid email address (e.g. user@example.com)");
             }
+            return;
+        }
+
+        // Check if already invited
+        if (project?.invitations.some(inv => inv.email.toLowerCase() === email.toLowerCase())) {
+            setInviteError("This user has already been invited");
+            return;
+        }
+
+        try {
+            const response = await authApi.get(`/auth/validate-email?email=${email}`);
+            if (!response.data.exists) {
+                setInviteError("Email is not registered");
+                setIsLecturer(false);
+            } else {
+                // Check if already a member
+                if (project?.members.some(member => member.userId === response.data.id)) {
+                    setInviteError("This user is already a member of the project");
+                    return;
+                }
+                setIsLecturer(response.data.role === "LECTURER");
+            }
+        } catch (err) {
+            // Ignore validation errors while typing
         }
     };
+
+    const isInviteDisabled = !inviteEmail || !!inviteError || inviteMemberMutation.isPending || !/^\S+@\S+\.\S+$/.test(inviteEmail);
 
     const updateTaskMutation = useMutation({
         mutationFn: async ({ taskId, progress, status }: { taskId: string; progress: number; status: string }) => {
@@ -827,11 +917,45 @@ function RouteComponent() {
     });
 
     const kickMemberMutation = useMutation({
-        mutationFn: async (memberId: string) => {
-            await projectApi.delete(`/projects/${projectId}/members/${memberId}`);
+        mutationFn: async (variables: { memberId: string; reason: string }) => {
+            const { memberId, reason } = variables;
+            if (!projectId) throw new Error("Missing project ID");
+            return projectApi.delete(`/projects/${projectId}/members/${memberId}`, {
+                data: { reason }
+            });
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects", projectId] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
+            setKickModal({ isOpen: false, memberId: "", username: "", reason: "" });
+        },
+        onError: (err: any) => {
+            const msg = err.response?.data?.message || err.message;
+            alert(`Kick failed: ${msg}`);
+        }
     });
+
+    const handleKickMember = (memberId: string, username: string) => {
+        setKickModal({
+            isOpen: true,
+            memberId,
+            username,
+            reason: "",
+        });
+    };
+
+    const submitKick = (e?: React.MouseEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        if (!kickModal.memberId || !kickModal.reason.trim()) return;
+
+        kickMemberMutation.mutate({ 
+            memberId: kickModal.memberId, 
+            reason: kickModal.reason 
+        });
+    };
 
     const leaveProjectMutation = useMutation({
         mutationFn: async () => {
@@ -1072,7 +1196,7 @@ function RouteComponent() {
                             role={member.role}
                             isLeader={member.userId === project.leaderId}
                             canKick={isLeader}
-                            onKick={() => kickMemberMutation.mutate(member.id)}
+                            onKick={(username) => handleKickMember(member.id, username)}
                         />
                     ))}
                     {members.length === 0 && (
@@ -1088,9 +1212,17 @@ function RouteComponent() {
                     <h2 className="text-lg font-bold text-gray-900">Kick Log</h2>
                     <p className="text-xs text-gray-400 mt-0.5">Record of members removed from this project</p>
                 </div>
-                <div className="px-7 py-10 text-center">
-                    <Clock className="h-7 w-7 text-gray-200 mx-auto mb-2" />
-                    <p className="text-sm text-gray-400">No kicks recorded yet.</p>
+                <div>
+                    {project.logReasons && project.logReasons.length > 0 ? (
+                        project.logReasons.map((log) => (
+                            <KickLogRow key={log.id} log={log} />
+                        ))
+                    ) : (
+                        <div className="px-7 py-10 text-center">
+                            <Clock className="h-7 w-7 text-gray-200 mx-auto mb-2" />
+                            <p className="text-sm text-gray-400">No kicks recorded yet.</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -1099,6 +1231,7 @@ function RouteComponent() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
                     <div className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden relative">
                         <button
+                            type="button"
                             onClick={() => {
                                 setIsInviteModalOpen(false);
                                 setInviteEmail("");
@@ -1138,8 +1271,9 @@ function RouteComponent() {
                                     )}
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={() => inviteMemberMutation.mutate(inviteEmail)}
-                                    disabled={!inviteEmail || !!inviteError || inviteMemberMutation.isPending}
+                                    disabled={isInviteDisabled}
                                     className="w-full py-2.5 bg-[#00008B] text-white text-sm font-bold rounded-lg hover:bg-blue-900 disabled:opacity-50 transition-colors flex items-center justify-center"
                                 >
                                     {inviteMemberMutation.isPending ? (
@@ -1148,6 +1282,72 @@ function RouteComponent() {
                                         "Send Invitation"
                                     )}
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* KICK MODAL */}
+            {kickModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden relative">
+                        <button
+                            type="button"
+                            onClick={() => setKickModal({ ...kickModal, isOpen: false })}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        <div className="px-6 py-5 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900">Kick Member</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Are you sure you want to remove <span className="font-bold text-gray-900">{kickModal.username}</span>?
+                            </p>
+                        </div>
+
+                        <div className="p-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                                        Reason for Removal <span className="text-red-500">*</span>
+                                    </label>
+                                    <textarea
+                                        placeholder="e.g. Inactivity, poor communication..."
+                                        value={kickModal.reason}
+                                        onChange={(e) => setKickModal({ ...kickModal, reason: e.target.value })}
+                                        rows={3}
+                                        className={`w-full p-2.5 text-sm border rounded-lg outline-none transition-colors resize-none ${
+                                            !kickModal.reason.trim() ? "border-gray-200" : "border-red-200 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                                        }`}
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-1.5 uppercase font-bold tracking-tight">
+                                        {kickModal.reason.trim() ? "Reason will be recorded" : "A reason is required to enable confirmation"}
+                                    </p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setKickModal({ ...kickModal, isOpen: false })}
+                                        className="flex-1 py-2.5 border border-gray-200 text-gray-600 text-sm font-bold rounded-lg hover:bg-gray-50 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={submitKick}
+                                        disabled={!kickModal.reason.trim() || kickMemberMutation.isPending}
+                                        className="flex-[2] py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:bg-gray-300 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        {kickMemberMutation.isPending ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <UserMinus className="h-4 w-4" />
+                                        )}
+                                        {kickMemberMutation.isPending ? "Removing..." : "Confirm Kick"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

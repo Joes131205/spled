@@ -63,7 +63,7 @@ function RouteComponent() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["projects"] });
             queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
-            navigate({ to: "/dashboard" });
+            navigate({ to: "/dashboard/project/$projectId", params: { projectId } });
         },
         onError: (err: any) => {
             setError(err.response?.data?.message || "Failed to update project");
@@ -98,6 +98,14 @@ function RouteComponent() {
 
         if (!formData.name.trim()) {
             setError("Project name is required");
+            return;
+        }
+        if (formData.name.length > 30) {
+            setError("Project name must be at most 30 characters");
+            return;
+        }
+        if (formData.description.length > 80) {
+            setError("Description must be at most 80 characters");
             return;
         }
 
@@ -181,13 +189,19 @@ function RouteComponent() {
                     <form onSubmit={handleSubmit} className="grid gap-8">
                         <div className="grid gap-6">
                             <div className="field">
-                                <label className="label text-base font-semibold mb-1.5">Project name *</label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="label text-base font-semibold">Project name *</label>
+                                    <span className={`text-[10px] font-bold ${formData.name.length === 30 ? 'text-rose-500' : 'text-slate-400'}`}>
+                                        {formData.name.length}/30
+                                    </span>
+                                </div>
                                 <input
                                     type="text"
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
                                     placeholder="Project name"
+                                    maxLength={30}
                                     className="input text-sm py-3 px-5"
                                     required
                                 />
@@ -195,13 +209,19 @@ function RouteComponent() {
                             </div>
 
                             <div className="field">
-                                <label className="label text-base font-semibold mb-1.5">Description</label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="label text-base font-semibold">Description</label>
+                                    <span className={`text-[10px] font-bold ${formData.description.length === 80 ? 'text-rose-500' : 'text-slate-400'}`}>
+                                        {formData.description.length}/80
+                                    </span>
+                                </div>
                                 <textarea
                                     name="description"
                                     value={formData.description}
                                     onChange={handleChange}
                                     placeholder="Brief project description"
                                     rows={3}
+                                    maxLength={80}
                                     className="textarea text-sm py-3 px-5"
                                 />
                             </div>
@@ -235,7 +255,7 @@ function RouteComponent() {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => navigate({ to: "/dashboard" })}
+                                    onClick={() => navigate({ to: "/dashboard/project/$projectId", params: { projectId } })}
                                     className="button button--secondary px-8 py-3 text-base rounded-2xl flex-1 sm:flex-none"
                                 >
                                     Cancel

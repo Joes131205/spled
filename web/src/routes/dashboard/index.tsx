@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { Calendar, MoreVertical, Plus, Trash2, Edit2, LogOut, Users, Loader2, Mail } from "lucide-react";
+import { Calendar, MoreVertical, Plus, Trash2, Edit2, LogOut, Users, Loader2, Mail, AlertCircle, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectApi } from "../../utils/api";
 
@@ -123,6 +123,18 @@ function RouteComponent() {
             : "MEMBER";
     const isLecturer = userRole === "LECTURER";
 
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        type: "delete" | "leave" | null;
+        projectId: string | null;
+        projectName: string | null;
+    }>({
+        isOpen: false,
+        type: null,
+        projectId: null,
+        projectName: null,
+    });
+
     const { data: projects = [], isLoading } = useQuery<Project[]>({
         queryKey: ["projects"],
         queryFn: async () => {
@@ -147,12 +159,17 @@ function RouteComponent() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["projects"] });
+            setConfirmModal({ isOpen: false, type: null, projectId: null, projectName: null });
         },
     });
 
-    const handleDelete = (id: string) => {
-        if (!confirm("Are you sure you want to delete this project?")) return;
-        deleteProjectMutation.mutate(id);
+    const handleDelete = (id: string, name: string) => {
+        setConfirmModal({
+            isOpen: true,
+            type: "delete",
+            projectId: id,
+            projectName: name,
+        });
     };
 
     const leaveProjectMutation = useMutation({
@@ -161,6 +178,7 @@ function RouteComponent() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["projects"] });
+            setConfirmModal({ isOpen: false, type: null, projectId: null, projectName: null });
         },
         onError: (err: any) => {
             const msg = err.response?.data?.message || err.message;
@@ -168,9 +186,13 @@ function RouteComponent() {
         }
     });
 
-    const handleLeave = (id: string) => {
-        if (!confirm("Are you sure you want to leave this project?")) return;
-        leaveProjectMutation.mutate(id);
+    const handleLeave = (id: string, name: string) => {
+        setConfirmModal({
+            isOpen: true,
+            type: "leave",
+            projectId: id,
+            projectName: name,
+        });
     };
 
     const calculateProgress = (tasks: any[]) => {
@@ -181,6 +203,80 @@ function RouteComponent() {
 
     return (
         <div className="grid gap-8 py-4">
+            {/* Confirmation Modal */}
+            {confirmModal.isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div 
+                        className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-8">
+                            <div className="flex items-start justify-between mb-6">
+                                <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg ${
+                                    confirmModal.type === "delete" 
+                                        ? "bg-rose-50 text-rose-600 shadow-rose-100" 
+                                        : "bg-amber-50 text-amber-600 shadow-amber-100"
+                                }`}>
+                                    {confirmModal.type === "delete" ? (
+                                        <Trash2 className="h-7 w-7" />
+                                    ) : (
+                                        <LogOut className="h-7 w-7" />
+                                    )}
+                                </div>
+                                <button 
+                                    onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                                {confirmModal.type === "delete" ? "Delete Project?" : "Leave Project?"}
+                            </h3>
+                            <p className="text-slate-500 leading-relaxed">
+                                {confirmModal.type === "delete" 
+                                    ? `This will permanently remove "${confirmModal.projectName}" and all its tasks. This action cannot be undone.`
+                                    : `Are you sure you want to leave "${confirmModal.projectName}"? You will lose access to all project data.`
+                                }
+                            </p>
+
+                            <div className="mt-8 grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                                    className="px-6 py-3.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (confirmModal.type === "delete") {
+                                            deleteProjectMutation.mutate(confirmModal.projectId!);
+                                        } else {
+                                            leaveProjectMutation.mutate(confirmModal.projectId!);
+                                        }
+                                    }}
+                                    disabled={deleteProjectMutation.isPending || leaveProjectMutation.isPending}
+                                    className={`px-6 py-3.5 text-sm font-bold text-white rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${
+                                        confirmModal.type === "delete"
+                                            ? "bg-rose-600 hover:bg-rose-700 shadow-rose-100"
+                                            : "bg-amber-600 hover:bg-amber-700 shadow-amber-100"
+                                    }`}
+                                >
+                                    {(deleteProjectMutation.isPending || leaveProjectMutation.isPending) ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : confirmModal.type === "delete" ? (
+                                        "Delete"
+                                    ) : (
+                                        "Leave"
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Page header */}
             <div className="flex flex-col gap-2">
                 <div className="space-y-1">
@@ -281,8 +377,8 @@ function RouteComponent() {
                                                         search: { id: project.id },
                                                     })
                                                 }
-                                                onDelete={() => handleDelete(project.id)}
-                                                onLeave={() => handleLeave(project.id)}
+                                                onDelete={() => handleDelete(project.id, project.name)}
+                                                onLeave={() => handleLeave(project.id, project.name)}
                                             />
                                         ) : (
                                             <button
@@ -291,7 +387,7 @@ function RouteComponent() {
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
-                                                    handleLeave(project.id);
+                                                    handleLeave(project.id, project.name);
                                                 }}
                                             >
                                                 <LogOut className="h-3.5 w-3.5" />

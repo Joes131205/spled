@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { createProjectDto } from '../utils/dto/createProjectDto';
 import { prisma } from '../db/prisma.client';
 
@@ -94,6 +94,7 @@ export class ProjectsService {
         members: true,
         tasks: true,
         invitations: true,
+        logReasons: true,
       }
     });
     if (!project) {
@@ -109,7 +110,7 @@ export class ProjectsService {
     return { ...project, members: enrichedMembers };
   }
 
-  async updateProject(projectId: string, body: createProjectDto) {
+  async updateProject(projectId: string, body: createProjectDto, userId: string) {
     const project = await db.project.findUnique({
       where: { id: projectId },
     });
@@ -117,9 +118,13 @@ export class ProjectsService {
       throw new NotFoundException('Project not found');
     }
 
+    if (project.leaderId !== userId) {
+      throw new ForbiddenException('Only the project leader can update this project');
+    }
+
     const { teamMembers, ...updateData } = body;
     const data: any = { ...updateData };
-    
+
     if (data.endDate) {
       data.endDate = new Date(data.endDate);
     }
@@ -136,6 +141,10 @@ export class ProjectsService {
     });
     if (!project) {
       throw new NotFoundException('Project not found');
+    }
+
+    if (project.leaderId !== userId) {
+      throw new ForbiddenException('Only the project leader can invite members');
     }
 
     const invitation = await db.invitation.create({
@@ -164,20 +173,45 @@ export class ProjectsService {
     return db.projectMember.delete({ where: { id: member.id } });
   }
 
-  async kickMember(projectId: string, memberId: string) {
-    const member = await db.projectMember.findUnique({ where: { id: memberId } });
-    if (!member || member.projectId !== projectId) {
-      throw new NotFoundException('Member not found in this project');
-    }
-    return db.projectMember.delete({ where: { id: memberId } });
-  }
-
-  async deleteProject(projectId: string) {
+  async kickMember(projectId: string, memberId: string, reason: string, userId: string) {
     const project = await db.project.findUnique({
       where: { id: projectId },
     });
     if (!project) {
       throw new NotFoundException('Project not found');
+    }
+
+    if (project.leaderId !== userId) {
+      throw new ForbiddenException('Only the project leader can kick members');
+    }
+
+    const member = await db.projectMember.findUnique({ where: { id: memberId } });
+    if (!member || member.projectId !== projectId) {
+      throw new NotFoundException('Member not found in this project');
+    }
+
+    // Create log entry
+    await db.logReason.create({
+      data: {
+        projectId,
+        memberId: member.userId,
+        reason: reason || 'No reason provided',
+      }
+    });
+
+    return db.projectMember.delete({ where: { id: memberId } });
+  }
+
+  async deleteProject(projectId: string, userId: string) {
+    const project = await db.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    if (project.leaderId !== userId) {
+      throw new ForbiddenException('Only the project leader can delete this project');
     }
 
     return db.project.delete({ where: { id: projectId } });

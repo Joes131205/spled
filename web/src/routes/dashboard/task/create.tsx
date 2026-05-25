@@ -112,6 +112,10 @@ function RouteComponent() {
             setError("Task name must be at least 3 characters");
             return;
         }
+        if (name.length > 30) {
+            setError("Task name must be at most 30 characters");
+            return;
+        }
 
         createTaskMutation.mutate({
             projectId,
@@ -134,19 +138,6 @@ function RouteComponent() {
 
     return (
         <div className="grid gap-6">
-            <button
-                onClick={() =>
-                    navigate({
-                        to: "/dashboard/project/$projectId",
-                        params: { projectId },
-                    })
-                }
-                className="back-link w-fit"
-            >
-                <ArrowLeft className="h-5 w-5" />
-                Back to Project
-            </button>
-
             <div className="surface">
                 <div className="surface__body max-w-2xl">
                     <p className="kicker">Task</p>
@@ -174,9 +165,15 @@ function RouteComponent() {
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="e.g., Design login page"
+                                maxLength={30}
                                 className="input h-12"
                                 required
                             />
+                            <div className="flex justify-end">
+                                <span className={`text-[10px] font-bold mt-1 ${name.length === 30 ? 'text-rose-500' : 'text-slate-400'}`}>
+                                    {name.length}/30
+                                </span>
+                            </div>
                         </div>
 
                         <div className="field">
@@ -187,8 +184,8 @@ function RouteComponent() {
                                         (optional)
                                     </span>
                                 </label>
-                                <span className={`text-[10px] font-bold ${description.length === 30 ? 'text-rose-500' : 'text-slate-400'}`}>
-                                    {description.length}/30
+                                <span className={`text-[10px] font-bold ${description.length === 50 ? 'text-rose-500' : 'text-slate-400'}`}>
+                                    {description.length}/50
                                 </span>
                             </div>
                             <textarea
@@ -196,7 +193,7 @@ function RouteComponent() {
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="What needs to be done?"
                                 rows={3}
-                                maxLength={30}
+                                maxLength={50}
                                 className="textarea min-h-24"
                             />
                         </div>
@@ -311,17 +308,31 @@ function RouteComponent() {
                             )}
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="button button--primary w-full mt-4 h-12 text-base font-bold shadow-lg shadow-indigo-100"
-                        >
-                            {createTaskMutation.isPending ? (
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : (
-                                "Create task"
-                            )}
-                        </button>
+                        <div className="grid grid-cols-2 gap-3 mt-4">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="button button--primary h-12 text-sm font-bold shadow-lg shadow-indigo-100"
+                            >
+                                {createTaskMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    "Create task"
+                                )}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    navigate({
+                                        to: "/dashboard/project/$projectId",
+                                        params: { projectId },
+                                    })
+                                }
+                                className="button button--secondary h-12 text-sm font-bold"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>

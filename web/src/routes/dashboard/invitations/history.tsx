@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Trash2, Inbox, Loader2, Calendar } from "lucide-react";
+import { Trash2, Inbox, Loader2, Calendar, AlertCircle, X } from "lucide-react";
+import { useState } from "react";
 import { projectApi, authApi } from "../../../utils/api";
 
 export const Route = createFileRoute("/dashboard/invitations/history")({
@@ -58,6 +59,16 @@ function RouteComponent() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        type: "delete" | "clear" | null;
+        invitationId: string | null;
+    }>({
+        isOpen: false,
+        type: null,
+        invitationId: null,
+    });
+
     const { data: history = [], isLoading } = useQuery<InvitationHistory[]>({
         queryKey: ["invitations", "history"],
         queryFn: async () => {
@@ -72,6 +83,7 @@ function RouteComponent() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["invitations", "history"] });
+            setConfirmModal({ isOpen: false, type: null, invitationId: null });
         },
     });
 
@@ -81,25 +93,90 @@ function RouteComponent() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["invitations", "history"] });
+            setConfirmModal({ isOpen: false, type: null, invitationId: null });
         },
     });
 
     const handleDelete = (id: string) => {
-        if (confirm("Delete this history record?")) {
-            deleteMutation.mutate(id);
-        }
+        setConfirmModal({
+            isOpen: true,
+            type: "delete",
+            invitationId: id,
+        });
     };
 
     const handleClearAll = () => {
-        if (confirm("Clear all invitation history? This cannot be undone.")) {
-            clearAllMutation.mutate();
-        }
+        setConfirmModal({
+            isOpen: true,
+            type: "clear",
+            invitationId: null,
+        });
     };
 
     const userRole = typeof window !== "undefined" ? localStorage.getItem("role") : null;
 
     return (
         <div className="flex min-h-[85vh] items-center justify-center p-6">
+            {/* Confirmation Modal */}
+            {confirmModal.isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div 
+                        className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-8">
+                            <div className="flex items-start justify-between mb-6">
+                                <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg bg-rose-50 text-rose-600 shadow-rose-100">
+                                    <Trash2 className="h-7 w-7" />
+                                </div>
+                                <button 
+                                    onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                                {confirmModal.type === "delete" ? "Delete Record?" : "Clear All History?"}
+                            </h3>
+                            <p className="text-slate-500 leading-relaxed">
+                                {confirmModal.type === "delete" 
+                                    ? "This will remove this invitation record from your history. This action cannot be undone."
+                                    : "This will permanently clear your entire invitation history. This action cannot be undone."
+                                }
+                            </p>
+
+                            <div className="mt-8 grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                                    className="px-6 py-3.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (confirmModal.type === "delete") {
+                                            deleteMutation.mutate(confirmModal.invitationId!);
+                                        } else {
+                                            clearAllMutation.mutate();
+                                        }
+                                    }}
+                                    disabled={deleteMutation.isPending || clearAllMutation.isPending}
+                                    className="px-6 py-3.5 text-sm font-bold text-white rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 shadow-rose-100"
+                                >
+                                    {(deleteMutation.isPending || clearAllMutation.isPending) ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        "Delete"
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="surface w-full max-w-4xl shadow-2xl">
                 <div className="surface__body p-10 sm:p-12">
                     <div className="mb-10 flex justify-between items-start">

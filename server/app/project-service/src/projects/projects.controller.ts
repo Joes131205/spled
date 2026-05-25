@@ -49,8 +49,10 @@ export class ProjectsController {
   updateProject(
     @Param('projectId') projectId: string,
     @Body() body: createProjectDto,
+    @Req() req: any,
   ) {
-    return this.projectsService.updateProject(projectId, body);
+    const userId = req.user.userId;
+    return this.projectsService.updateProject(projectId, body, userId);
   }
 
   @Post(':projectId/invite')
@@ -74,18 +76,22 @@ export class ProjectsController {
 
   @Delete(':projectId/members/:memberId')
   @ApiOperation({ summary: 'Kick a member from a project' })
-  @Roles('LEADER')
+  @Roles('LEADER', 'MEMBER')
   kickMember(
     @Param('projectId') projectId: string,
     @Param('memberId') memberId: string,
+    @Body('reason') reason: string,
+    @Req() req: any,
   ) {
-    return this.projectsService.kickMember(projectId, memberId);
+    const userId = req.user.userId;
+    return this.projectsService.kickMember(projectId, memberId, reason, userId);
   }
 
   @Delete(':projectId')
   @ApiOperation({ summary: 'Delete a project' })
   @Roles('LEADER', 'MEMBER', 'LECTURER')
-  deleteProject(@Param('projectId') projectId: string) {
-    return this.projectsService.deleteProject(projectId);
+  deleteProject(@Param('projectId') projectId: string, @Req() req: any) {
+    const userId = req.user.userId;
+    return this.projectsService.deleteProject(projectId, userId);
   }
 }

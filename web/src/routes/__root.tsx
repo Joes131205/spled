@@ -49,6 +49,7 @@ function RootDocument({ children }: { children: ReactNode }) {
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     // Use effect to handle mounting state for hydration safety
     React.useEffect(() => {
@@ -63,6 +64,10 @@ function RootDocument({ children }: { children: ReactNode }) {
         (location.pathname === "/" && !userId);
 
     const handleLogout = () => {
+        setShowLogoutModal(true);
+    };
+
+    const confirmLogout = () => {
         if (typeof window !== "undefined") {
             localStorage.clear();
             window.location.href = "/login";
@@ -115,6 +120,52 @@ function RootDocument({ children }: { children: ReactNode }) {
                 <HeadContent />
             </head>
             <body className={bodyClass}>
+                {/* Logout Confirmation Modal */}
+                {showLogoutModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div 
+                            className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="p-8">
+                                <div className="flex items-start justify-between mb-6">
+                                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg bg-indigo-50 text-indigo-600 shadow-indigo-100">
+                                        <LogOut className="h-7 w-7" />
+                                    </div>
+                                    <button 
+                                        onClick={() => setShowLogoutModal(false)}
+                                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                                    >
+                                        <X className="h-5 w-5" />
+                                    </button>
+                                </div>
+
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                                    Logout Confirmation
+                                </h3>
+                                <p className="text-slate-500 leading-relaxed text-base">
+                                    Are you sure you want to log out? You will need to sign in again to access your workspace.
+                                </p>
+
+                                <div className="mt-8 grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => setShowLogoutModal(false)}
+                                        className="px-6 py-3.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-all"
+                                    >
+                                        Stay here
+                                    </button>
+                                    <button
+                                        onClick={confirmLogout}
+                                        className="px-6 py-3.5 text-sm font-bold text-white rounded-2xl transition-all shadow-lg bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100"
+                                    >
+                                        Log out
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {isAuthPage ? (
                     children
                 ) : (
