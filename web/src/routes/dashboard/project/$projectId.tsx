@@ -13,6 +13,7 @@ import {
     UserPlus,
     X,
     Link as LinkIcon,
+    LogOut,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectApi, authApi, evidenceApi } from "../../../utils/api";
@@ -35,6 +36,7 @@ interface Task {
 interface ProjectMember {
     id: string;
     userId: string;
+    role: string;
     joinedAt: string;
 }
 
@@ -59,11 +61,13 @@ interface Project {
 
 function MemberRow({
     userId,
+    role,
     isLeader,
     onKick,
     canKick,
 }: {
     userId: string;
+    role: string;
     isLeader: boolean;
     onKick?: () => void;
     canKick: boolean;
@@ -76,7 +80,7 @@ function MemberRow({
         },
     });
 
-    if (user?.role === "LECTURER") return null;
+    if (role === "LECTURER" || user?.role === "LECTURER") return null;
 
     const initials = user?.username?.charAt(0).toUpperCase() || "?";
     const colors = ["bg-[#00008B]", "bg-green-600", "bg-yellow-500", "bg-purple-600", "bg-rose-600"];
@@ -731,6 +735,7 @@ function TaskRow({
 }
 
 function RouteComponent() {
+    const navigate = useNavigate();
     const { projectId } = Route.useParams();
     const queryClient = useQueryClient();
     const [isMounted, setIsMounted] = useState(false);
@@ -828,6 +833,25 @@ function RouteComponent() {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects", projectId] }),
     });
 
+    const leaveProjectMutation = useMutation({
+        mutationFn: async () => {
+            await projectApi.delete(`/projects/${projectId}/leave`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["projects"] });
+            navigate({ to: "/dashboard" });
+        },
+        onError: (err: any) => {
+            const msg = err.response?.data?.message || err.message;
+            alert(`Failed to leave project: ${msg}`);
+        }
+    });
+
+    const handleLeaveProject = () => {
+        if (!confirm("Are you sure you want to leave this project?")) return;
+        leaveProjectMutation.mutate();
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -841,7 +865,7 @@ function RouteComponent() {
     }
 
     const tasks = project.tasks.filter((t) => !(isLecturer && t.name === 'TBD')) || [];
-    const members = project.members || [];
+    const members = (project.members || []).filter(m => m.role !== 'LECTURER');
     const isLeader = project.leaderId === userId;
 
     const doneTasks = tasks.filter((t) => t.status === "DONE");
@@ -869,12 +893,27 @@ function RouteComponent() {
                         </div>
                         {isLeader && (
                             <Link
-                                to={`/dashboard/project/${projectId}/edit`}
+                                to="/dashboard/project/edit"
+                                search={{ id: projectId }}
                                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors shrink-0"
                             >
                                 <Edit2 className="h-3.5 w-3.5" />
                                 Edit project
                             </Link>
+                        )}
+                        {!isLeader && (
+                            <button
+                                onClick={handleLeaveProject}
+                                disabled={leaveProjectMutation.isPending}
+                                className="button button--leave flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors shrink-0 disabled:opacity-50"
+                            >
+                                {leaveProjectMutation.isPending ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                    <LogOut className="h-3.5 w-3.5" />
+                                )}
+                                Leave project
+                            </button>
                         )}
                     </div>
                     <div className="flex items-center justify-between mt-5 gap-6 flex-wrap">
@@ -1030,6 +1069,7 @@ function RouteComponent() {
                         <MemberRow
                             key={member.id}
                             userId={member.userId}
+                            role={member.role}
                             isLeader={member.userId === project.leaderId}
                             canKick={isLeader}
                             onKick={() => kickMemberMutation.mutate(member.id)}

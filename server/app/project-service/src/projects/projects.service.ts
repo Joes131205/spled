@@ -5,8 +5,21 @@ import { prisma } from '../db/prisma.client';
 const db = prisma;
 @Injectable()
 export class ProjectsService {
+  private async getUserRole(userId: string): Promise<string> {
+    try {
+      const response = await fetch(`http://localhost:3001/auth/users/${userId}`);
+      if (!response.ok) return 'MEMBER';
+      const data: any = await response.json();
+      return data.role || 'MEMBER';
+    } catch (error) {
+      console.error('[ProjectsService] Failed to fetch user role:', error);
+      return 'MEMBER';
+    }
+  }
+
   async createProject(body: createProjectDto) {
     console.log('[ProjectsService] Creating project with body:', JSON.stringify(body, null, 2));
+    const leaderRole = await this.getUserRole(body.leaderId);
     try {
       const project = await db.project.create({
         data: {
@@ -17,6 +30,7 @@ export class ProjectsService {
           members: {
             create: {
               userId: body.leaderId,
+              role: leaderRole,
             }
           },
           invitations: {
@@ -52,7 +66,7 @@ export class ProjectsService {
   }
 
   async getMyProjects(userId: string) {
-    return db.project.findMany({
+    const projects = await db.project.findMany({
       where: {
         members: { some: { userId: userId } }
       },
@@ -61,6 +75,17 @@ export class ProjectsService {
         tasks: true,
       }
     });
+
+    // Fetch roles for all members to ensure frontend can filter correctly
+    const enrichedProjects = await Promise.all(projects.map(async (project) => {
+      const enrichedMembers = await Promise.all(project.members.map(async (member) => {
+        const role = await this.getUserRole(member.userId);
+        return { ...member, role };
+      }));
+      return { ...project, members: enrichedMembers };
+    }));
+
+    return enrichedProjects;
   }
   async getProjectById(id: string) {
     const project = await db.project.findUnique({
@@ -74,7 +99,14 @@ export class ProjectsService {
     if (!project) {
       throw new NotFoundException('Project not found');
     }
-    return project;
+
+    // Fetch roles for all members
+    const enrichedMembers = await Promise.all(project.members.map(async (member) => {
+      const role = await this.getUserRole(member.userId);
+      return { ...member, role };
+    }));
+
+    return { ...project, members: enrichedMembers };
   }
 
   async updateProject(projectId: string, body: createProjectDto) {
@@ -84,7 +116,18 @@ export class ProjectsService {
     if (!project) {
       throw new NotFoundException('Project not found');
     }
-    return db.project.update({ data: body, where: { id: projectId } });
+
+    const { teamMembers, ...updateData } = body;
+    const data: any = { ...updateData };
+    
+    if (data.endDate) {
+      data.endDate = new Date(data.endDate);
+    }
+
+    return db.project.update({ 
+      data, 
+      where: { id: projectId } 
+    });
   }
 
   async inviteMember(projectId: string, body: { email: string; taskName?: string; difficulty?: 'EASY' | 'MEDIUM' | 'HARD' }, userId: string) {

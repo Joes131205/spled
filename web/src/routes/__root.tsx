@@ -47,8 +47,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootDocument({ children }: { children: ReactNode }) {
     const location = useLocation();
-    const isAuthPage =
-        location.pathname === "/login" || location.pathname === "/signup";
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
 
@@ -56,6 +54,13 @@ function RootDocument({ children }: { children: ReactNode }) {
     React.useEffect(() => {
         setIsMounted(true);
     }, []);
+
+    const userId = isMounted && typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+    
+    const isAuthPage =
+        location.pathname === "/login" || 
+        location.pathname === "/signup" || 
+        (location.pathname === "/" && !userId);
 
     const handleLogout = () => {
         if (typeof window !== "undefined") {

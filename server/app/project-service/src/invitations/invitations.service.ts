@@ -3,6 +3,18 @@ import { prisma } from '../db/prisma.client';
 
 @Injectable()
 export class InvitationsService {
+  private async getUserRole(userId: string): Promise<string> {
+    try {
+      const response = await fetch(`http://localhost:3001/auth/users/${userId}`);
+      if (!response.ok) return 'MEMBER';
+      const data: any = await response.json();
+      return data.role || 'MEMBER';
+    } catch (error) {
+      console.error('[InvitationsService] Failed to fetch user role:', error);
+      return 'MEMBER';
+    }
+  }
+
   async getMyInvitations(email: string) {
     return prisma.invitation.findMany({
       where: { email, status: 'PENDING' },
@@ -54,10 +66,12 @@ export class InvitationsService {
     });
 
     if (status === 'ACCEPTED') {
+      const role = await this.getUserRole(userId);
       await prisma.projectMember.create({
         data: {
           projectId: invitation.projectId,
-          userId: userId
+          userId: userId,
+          role: role,
         }
       });
       

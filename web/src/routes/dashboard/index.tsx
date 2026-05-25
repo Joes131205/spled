@@ -15,7 +15,7 @@ interface Project {
     endDate: string | null;
     createdAt: string;
     leaderId: string;
-    members: { userId: string }[];
+    members: { userId: string; role: string }[];
     tasks: any[];
 }
 
@@ -50,6 +50,7 @@ function KebabMenu({
             <button
                 onClick={(e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     setOpen((v) => !v);
                 }}
                 className="kebab-btn"
@@ -61,23 +62,25 @@ function KebabMenu({
             {open && (
                 <div className="dropdown-menu">
                     {isLeader && (
-                        <button
+                        <Link
+                            to="/dashboard/project/edit"
+                            search={{ id: project.id }}
                             className="dropdown-item"
                             onClick={(e) => {
-                                e.preventDefault();
+                                e.stopPropagation();
                                 setOpen(false);
-                                onEdit();
                             }}
                         >
                             <Edit2 className="h-3.5 w-3.5" />
                             Edit
-                        </button>
+                        </Link>
                     )}
                     {isLeader && (
                         <button
                             className="dropdown-item dropdown-item--danger"
                             onClick={(e) => {
                                 e.preventDefault();
+                                e.stopPropagation();
                                 setOpen(false);
                                 onDelete();
                             }}
@@ -90,6 +93,7 @@ function KebabMenu({
                         className="dropdown-item dropdown-item--leave"
                         onClick={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             setOpen(false);
                             onLeave();
                         }}
@@ -252,89 +256,106 @@ function RouteComponent() {
                         const progress = calculateProgress(project.tasks);
                         
                         return (
-                            <Link
+                            <div
                                 key={project.id}
-                                to="/dashboard/project/$projectId"
-                                params={{ projectId: project.id }}
-                                className="project-card"
+                                className="project-card group flex flex-col p-0 overflow-hidden"
                             >
-                                <div className="flex items-start justify-between gap-4">
-                                    <h3 className="project-card__title">{project.name}</h3>
-                                    {isLeader ? (
-                                        <KebabMenu
-                                            project={project}
-                                            isLeader={true}
-                                            onEdit={() =>
-                                                navigate({
-                                                    to: "/dashboard/project/$projectId/edit",
-                                                    params: { projectId: project.id },
-                                                })
-                                            }
-                                            onDelete={() => handleDelete(project.id)}
-                                            onLeave={() => handleLeave(project.id)}
-                                        />
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            className="button button--leave button--compact"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                handleLeave(project.id);
-                                            }}
-                                        >
-                                            <LogOut className="h-3.5 w-3.5" />
-                                            Leave
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* Title + description */}
-                                <p className="project-card__description line-clamp-2">
-                                    {project.description || "No description yet."}
-                                </p>
-
-                                {/* Role */}
-                                <div className="card-role-row">
-                                    <span className="role-label">Your Role:</span>
-                                    <span className={`role-badge role-badge--${isLeader ? "leader" : isLecturer ? "lecturer" : "member"}`}>
-                                        {isLeader ? "LEADER" : isLecturer ? "LECTURER" : "MEMBER"}
-                                    </span>
-                                </div>
-
-                                {/* Meta row */}
-                                <div className="card-meta">
-                                    <div className="flex items-center gap-1.5">
-                                        <Users className="h-3.5 w-3.5" />
-                                        <span>{project.members?.length || 0} members</span>
+                                <div className="flex items-start justify-between gap-4 p-6 pb-0">
+                                    <button
+                                        onClick={() => navigate({ 
+                                            to: "/dashboard/project/$projectId", 
+                                            params: { projectId: project.id } 
+                                        })}
+                                        className="project-card__title group-hover:text-indigo-600 transition-colors text-left flex-1"
+                                    >
+                                        {project.name}
+                                    </button>
+                                    <div className="shrink-0">
+                                        {isLeader ? (
+                                            <KebabMenu
+                                                project={project}
+                                                isLeader={true}
+                                                onEdit={() =>
+                                                    navigate({
+                                                        to: "/dashboard/project/edit",
+                                                        search: { id: project.id },
+                                                    })
+                                                }
+                                                onDelete={() => handleDelete(project.id)}
+                                                onLeave={() => handleLeave(project.id)}
+                                            />
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                className="button button--leave button--compact"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    handleLeave(project.id);
+                                                }}
+                                            >
+                                                <LogOut className="h-3.5 w-3.5" />
+                                                Leave
+                                            </button>
+                                        )}
                                     </div>
-                                    {project.endDate && (
+                                </div>
+
+                                <div
+                                    onClick={() => navigate({ 
+                                        to: "/dashboard/project/$projectId", 
+                                        params: { projectId: project.id } 
+                                    })}
+                                    className="flex-1 flex flex-col p-6 pt-2 cursor-pointer"
+                                >
+                                    {/* Title + description */}
+                                    <p className="project-card__description line-clamp-2">
+                                        {project.description || "No description yet."}
+                                    </p>
+
+                                    {/* Role */}
+                                    <div className="card-role-row">
+                                        <span className="role-label">Your Role:</span>
+                                        <span className={`role-badge role-badge--${isLeader ? "leader" : isLecturer ? "lecturer" : "member"}`}>
+                                            {isLeader ? "LEADER" : isLecturer ? "LECTURER" : "MEMBER"}
+                                        </span>
+                                    </div>
+
+                                    {/* Meta row */}
+                                    <div className="card-meta">
                                         <div className="flex items-center gap-1.5">
-                                            <Calendar className="h-3.5 w-3.5" />
-                                            <span>
-                                                {new Date(project.endDate).toLocaleDateString("en-US", {
-                                                    month: "short",
-                                                    day: "numeric",
-                                                    year: "numeric",
-                                                })}
-                                            </span>
+                                            <Users className="h-3.5 w-3.5" />
+                                            <span>{project.members?.filter(m => m.role !== 'LECTURER').length || 0} members</span>
                                         </div>
-                                    )}
-                                </div>
+                                        {project.endDate && (
+                                            <div className="flex items-center gap-1.5">
+                                                <Calendar className="h-3.5 w-3.5" />
+                                                <span>
+                                                    {new Date(project.endDate).toLocaleDateString("en-US", {
+                                                        month: "short",
+                                                        day: "numeric",
+                                                        year: "numeric",
+                                                    })}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
 
-                                {/* Progress bar */}
-                                <div className="progress-section">
-                                    <div className="progress-header">
-                                        <span>Progress</span>
-                                        <span>{progress}%</span>
-                                    </div>
-                                    <div className="progress-track">
-                                        <div
-                                            className="progress-fill !bg-indigo-700"
-                                            style={{ width: `${progress}%` }}
-                                        />
+                                    {/* Progress bar */}
+                                    <div className="progress-section mt-auto">
+                                        <div className="progress-header">
+                                            <span>Progress</span>
+                                            <span>{progress}%</span>
+                                        </div>
+                                        <div className="progress-track">
+                                            <div
+                                                className="progress-fill !bg-indigo-700"
+                                                style={{ width: `${progress}%` }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                            </Link>
+                            </div>
                         );
                     })}
                 </div>
