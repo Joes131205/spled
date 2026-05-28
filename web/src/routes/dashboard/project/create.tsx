@@ -64,7 +64,6 @@ function RouteComponent() {
             ...formData,
             [e.target.name]: e.target.value,
         });
-        // Clear field error when user types
         if (fieldErrors[e.target.name]) {
             setFieldErrors(prev => {
                 const updated = { ...prev };
@@ -83,7 +82,6 @@ function RouteComponent() {
         updatedMembers[index] = { ...updatedMembers[index], [field]: value } as TeamMember;
         setTeamMembers(updatedMembers);
 
-        // Clear field error when user types
         const errorKey = `member.${index}.${field}`;
         if (fieldErrors[errorKey]) {
             setFieldErrors(prev => {
@@ -104,8 +102,6 @@ function RouteComponent() {
     const removeTeamMember = (index: number) => {
         if (teamMembers.length > 1) {
             setTeamMembers(teamMembers.filter((_, i) => i !== index));
-            // Clear errors for this index and shift others? 
-            // Simplified: just clear all member errors to be safe, or leave them.
             setFieldErrors({}); 
         }
     };
@@ -330,7 +326,7 @@ function RouteComponent() {
                                                     <Trash2 className="h-5 w-5" />
                                                 </button>
                                             ) : (
-                                                <div className="p-2 h-9 w-9 mt-5" /> // Spacer for alignment
+                                                <div className="p-2 h-9 w-9 mt-5" /> 
                                             )}
                                         </div>
                                     ))}

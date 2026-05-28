@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AlertCircle, ArrowLeft } from "lucide-react";
+import { projectApi } from "../../../utils/api";
 
 export const Route = createFileRoute("/dashboard/task/create-new")({
     component: RouteComponent,
@@ -32,7 +33,7 @@ function RouteComponent() {
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
 
@@ -42,9 +43,19 @@ function RouteComponent() {
         }
 
         setLoading(true);
-        setTimeout(() => {
+        try {
+            await projectApi.post("/tasks", {
+                projectId,
+                name: formData.name,
+                description: formData.description,
+                weight: formData.weight,
+                deadline: formData.deadline || undefined,
+            });
             navigate({ to: `/dashboard/project/${projectId}` });
-        }, 300);
+        } catch (err: any) {
+            setError(err.response?.data?.message || "Failed to create task");
+            setLoading(false);
+        }
     };
 
     return (

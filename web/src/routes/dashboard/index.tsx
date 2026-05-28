@@ -203,7 +203,6 @@ function RouteComponent() {
 
     return (
         <div className="grid gap-8 py-4">
-            {/* Confirmation Modal */}
             {confirmModal.isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
                     <div 
@@ -277,7 +276,6 @@ function RouteComponent() {
                 </div>
             )}
 
-            {/* Page header */}
             <div className="flex flex-col gap-2">
                 <div className="space-y-1">
                     <p className="text-xs font-bold tracking-[0.24em] uppercase text-[#00008B]">Workspace</p>
@@ -288,7 +286,6 @@ function RouteComponent() {
                 </p>
             </div>
 
-            {/* Toolbar row */}
             <div className="projects-toolbar">
                 <div className="tab-group">
                     <button className="tab tab--active">
@@ -404,12 +401,10 @@ function RouteComponent() {
                                     })}
                                     className="flex-1 flex flex-col p-6 pt-2 cursor-pointer"
                                 >
-                                    {/* Title + description */}
                                     <p className="project-card__description line-clamp-2">
                                         {project.description || "No description yet."}
                                     </p>
 
-                                    {/* Role */}
                                     <div className="card-role-row">
                                         <span className="role-label">Your Role:</span>
                                         <span className={`role-badge role-badge--${isLeader ? "leader" : isLecturer ? "lecturer" : "member"}`}>
@@ -417,7 +412,6 @@ function RouteComponent() {
                                         </span>
                                     </div>
 
-                                    {/* Meta row */}
                                     <div className="card-meta">
                                         <div className="flex items-center gap-1.5">
                                             <Users className="h-3.5 w-3.5" />
@@ -437,7 +431,6 @@ function RouteComponent() {
                                         )}
                                     </div>
 
-                                    {/* Progress bar */}
                                     <div className="progress-section mt-auto">
                                         <div className="progress-header">
                                             <span>Progress</span>

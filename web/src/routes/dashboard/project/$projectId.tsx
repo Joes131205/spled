@@ -861,7 +861,6 @@ function RouteComponent() {
             return;
         }
 
-        // Check if already invited
         if (project?.invitations.some(inv => inv.email.toLowerCase() === email.toLowerCase())) {
             setInviteError("This user has already been invited");
             return;
@@ -1067,7 +1066,6 @@ function RouteComponent() {
                 </div>
             </div>
 
-            {/* MEMBER CONTRIBUTIONS */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
                 <div className="px-7 py-5 border-b border-gray-100">
                     <p className="text-xs font-semibold text-[#00008B] uppercase tracking-widest mb-0.5">Analytics</p>
@@ -1107,7 +1105,6 @@ function RouteComponent() {
                 </div>
             </div>
 
-            {/* TASK BOARD */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="px-7 py-5 border-b border-gray-100 flex items-center justify-between">
                     <div>
@@ -1171,7 +1168,6 @@ function RouteComponent() {
                 </div>
             </div>
 
-            {/* TEAM MEMBERS */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="px-7 py-5 border-b border-gray-100 flex items-center justify-between">
                     <div>
@@ -1205,7 +1201,6 @@ function RouteComponent() {
                 </div>
             </div>
 
-            {/* KICK LOG */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="px-7 py-5 border-b border-gray-100">
                     <p className="text-xs font-semibold text-[#00008B] uppercase tracking-widest mb-0.5">Activity</p>
@@ -1226,7 +1221,6 @@ function RouteComponent() {
                 </div>
             </div>
 
-            {/* INVITE MODAL */}
             {isInviteModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
                     <div className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden relative">
@@ -1288,7 +1282,6 @@ function RouteComponent() {
                 </div>
             )}
 
-            {/* KICK MODAL */}
             {kickModal.isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
                     <div className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden relative">

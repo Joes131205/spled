@@ -15,15 +15,10 @@ function RouteComponent() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [role, setRole] = useState<"student" | "lecturer">("student");
-    
-    // Validation States
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [emailStatus, setEmailStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
     const [generalError, setGeneralError] = useState<string | null>(null);
-    
     const navigate = useNavigate();
-
-    // Signup Mutation
     const signupMutation = useMutation({
         mutationFn: async () => {
             const response = await authApi.post("/auth/register", {
@@ -43,7 +38,6 @@ function RouteComponent() {
         }
     });
 
-    // Real-time Email Check
     useEffect(() => {
         const checkEmail = async () => {
             if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
@@ -121,7 +115,6 @@ function RouteComponent() {
 
     return (
         <div className="min-h-screen flex">
-            {/* Left Side: Branding - Restored to match login page exactly */}
             <div
                 className="hidden lg:flex lg:w-[58%] xl:w-[62%] flex-col items-center justify-center relative overflow-hidden"
                 style={{
@@ -180,7 +173,6 @@ function RouteComponent() {
                 </div>
             </div>
 
-            {/* Right Side: Form */}
             <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-20 bg-white overflow-y-auto">
                 <div className="w-full max-w-sm mx-auto py-10">
                     <p className="text-xs font-bold tracking-widest uppercase text-indigo-700 mb-1">
