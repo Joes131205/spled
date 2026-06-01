@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useState, useEffect } from "react";
 import { AlertCircle, ArrowRight, Layout, LogIn } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { authApi } from "../utils/api";
@@ -19,6 +19,14 @@ function RouteComponent() {
     const [password, setPassword] = useState("");
     const [validationError, setValidationError] = useState<string | null>(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const userId = localStorage.getItem("userId");
+        if (token && userId) {
+            navigate({ to: "/dashboard" });
+        }
+    }, [navigate]);
 
     const loginMutation = useMutation({
         mutationFn: async () => {

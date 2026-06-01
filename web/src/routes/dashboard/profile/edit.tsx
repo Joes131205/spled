@@ -41,8 +41,7 @@ function RouteComponent() {
                 type: "success",
                 text: "Profile updated successfully.",
             });
-            
-            // Invalidate any queries that might depend on profile data
+
             queryClient.invalidateQueries({ queryKey: ["me"] });
         },
         onError: (error: any) => {
@@ -102,13 +101,12 @@ function RouteComponent() {
                     </div>
                 </div>
 
-                {false ? ( // modify accordingly, i set it to false to see this page, set true otherwise to see Loading...
+                {false ? ( 
                     <div className="empty-state">Loading...</div>
                 ) : (
                     <div className="surface__body grid gap-12 p-10 sm:p-12 lg:grid-cols-[300px_minmax(0,1fr)]">
                         <div className="grid justify-items-center gap-6">
                             <div className="avatar-mark h-40 w-40 text-5xl shadow-xl rounded-[2.5rem]">
-                                {/* show the user's avatar if it exists, otherwise show user's initials */}
                                 {avatarPreview ? (
                                     <img
                                         src={avatarPreview}
@@ -149,7 +147,6 @@ function RouteComponent() {
                         </div>
 
                         <div className="grid gap-8">
-                            {/* for profile update alert messages */}
                             {message.text && (
                                 <div
                                     className={`alert ${message.type === "success" ? "alert--success" : "alert--error"}`}

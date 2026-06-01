@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { LogOut, Menu, ShieldCheck, UserCircle2, X, LayoutDashboard, User, Mail } from "lucide-react";
+import { LogOut, Menu, ShieldCheck, UserCircle2, X, LayoutDashboard, User, Mail, ChevronLeft, ChevronRight } from "lucide-react";
 import React from "react";
 
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
@@ -77,6 +77,7 @@ function RootRouteError({ error }: { error: Error }) {
 function RootDocument({ children }: { children: ReactNode }) {
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -138,7 +139,7 @@ function RootDocument({ children }: { children: ReactNode }) {
                   location.pathname === "/"
                 : location.pathname.startsWith(path);
 
-        return `nav-link ${active ? "nav-link--active" : ""}`;
+        return `nav-link ${active ? "nav-link--active" : ""} ${sidebarCollapsed ? "justify-center px-2" : ""}`;
     };
 
     const bodyClass = isAuthPage ? "app-auth" : "";
@@ -149,7 +150,6 @@ function RootDocument({ children }: { children: ReactNode }) {
                 <HeadContent />
             </head>
             <body className={bodyClass}>
-                {/* Logout Confirmation Modal */}
                 {showLogoutModal && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
                         <div 
@@ -198,22 +198,22 @@ function RootDocument({ children }: { children: ReactNode }) {
                 {isAuthPage ? (
                     children
                 ) : (
-                    <div className="app-shell">
+                    <div className={`app-shell transition-all duration-300 ${sidebarCollapsed ? "lg:grid-cols-[0px_minmax(0,1fr)]" : "lg:grid-cols-[280px_minmax(0,1fr)]"}`}>
                         <aside
-                            className="app-sidebar flex flex-col"
+                            className={`app-sidebar flex flex-col transition-all duration-300 overflow-hidden ${sidebarCollapsed ? "lg:w-0 lg:px-0 lg:opacity-0 lg:pointer-events-none" : "lg:w-72 lg:px-6 lg:opacity-100"}`}
                             style={{
                                 transform: sidebarOpen
                                     ? "translateX(0)"
                                     : undefined,
                             }}
                         >
-                            <div className="app-sidebar__brand">
-                                <div className="brand-mark bg-white border border-slate-100 overflow-hidden p-2">
+                            <div className="app-sidebar__brand flex items-center gap-3">
+                                <div className="brand-mark bg-white border border-slate-100 overflow-hidden p-2 shrink-0">
                                     <img src="/logo.png" alt="Spled" className="h-full w-full object-contain" />
                                 </div>
-                                <div>
-                                    <div className="brand-name text-xl">Spled</div>
-                                    <div className="brand-subtitle">
+                                <div className="flex-1 truncate">
+                                    <div className="brand-name text-xl truncate">Spled</div>
+                                    <div className="brand-subtitle truncate">
                                         Group task splitter
                                     </div>
                                 </div>
@@ -225,8 +225,8 @@ function RootDocument({ children }: { children: ReactNode }) {
                                     to="/dashboard"
                                     className={linkClass("/dashboard")}
                                 >
-                                    <LayoutDashboard className="h-4 w-4" />
-                                    Dashboard
+                                    <LayoutDashboard className="h-4 w-4 shrink-0" />
+                                    <span>Dashboard</span>
                                 </Link>
 
                                 <p className="nav-section-title">Account</p>
@@ -236,8 +236,8 @@ function RootDocument({ children }: { children: ReactNode }) {
                                         "/dashboard/profile/display"
                                     )}
                                 >
-                                    <User className="h-4 w-4" />
-                                    Profile
+                                    <User className="h-4 w-4 shrink-0" />
+                                    <span>Profile</span>
                                 </Link>
                                 <Link
                                     to="/dashboard/invitations/pending"
@@ -245,14 +245,14 @@ function RootDocument({ children }: { children: ReactNode }) {
                                         "/dashboard/invitations/pending"
                                     )}
                                 >
-                                    <Mail className="h-4 w-4" />
-                                    Invitations
+                                    <Mail className="h-4 w-4 shrink-0" />
+                                    <span>Invitations</span>
                                 </Link>
                             </nav>
 
                             <div className="app-sidebar__footer">
-                                <div className="sidebar-user">
-                                    <div className="sidebar-user__avatar">
+                                <div className="sidebar-user flex items-center gap-3 px-2">
+                                    <div className="sidebar-user__avatar shrink-0">
                                         {userAvatar ? (
                                             <img
                                                 src={userAvatar}
@@ -265,16 +265,16 @@ function RootDocument({ children }: { children: ReactNode }) {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="sidebar-user__info">
-                                        <div className="sidebar-user__name">{userLabel}</div>
-                                        <div className="sidebar-user__email">{userEmail}</div>
-                                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+                                    <div className="sidebar-user__info min-w-0 flex-1">
+                                        <div className="sidebar-user__name truncate">{userLabel}</div>
+                                        <div className="sidebar-user__email truncate">{userEmail}</div>
+                                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5 truncate">
                                             {userRole}
                                         </div>
                                     </div>
                                     <button
                                         onClick={handleLogout}
-                                        className="sidebar-user__logout"
+                                        className="sidebar-user__logout shrink-0"
                                         title="Logout"
                                     >
                                         <LogOut className="h-4 w-4" />
@@ -283,11 +283,26 @@ function RootDocument({ children }: { children: ReactNode }) {
                             </div>
                         </aside>
 
-                        <div className="content-shell">
-                            <header className="topbar md:hidden">
+                        <div className="content-shell relative">
+                            {/* Desktop Sidebar Toggle - Floating & Sticky */}
+                            <div className="hidden lg:block sticky top-6 left-6 z-50 h-0 w-0 overflow-visible">
+                                <button 
+                                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                                    className="flex items-center justify-center h-10 w-10 rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-md text-slate-500 hover:text-indigo-600 hover:border-indigo-100 hover:bg-white transition-all shadow-md group absolute"
+                                    aria-label={sidebarCollapsed ? "Open sidebar" : "Close sidebar"}
+                                >
+                                    {sidebarCollapsed ? (
+                                        <Menu className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                                    ) : (
+                                        <ChevronLeft className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                                    )}
+                                </button>
+                            </div>
+
+                            <header className="topbar lg:hidden sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
                                 <button
                                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                                    className="button button--ghost button--compact md:hidden"
+                                    className="button button--ghost button--compact lg:hidden"
                                     aria-label="Toggle sidebar"
                                 >
                                     {sidebarOpen ? (
@@ -296,9 +311,10 @@ function RootDocument({ children }: { children: ReactNode }) {
                                         <Menu className="h-5 w-5" />
                                     )}
                                 </button>
+                                <div className="ml-3 font-bold text-slate-900">Spled</div>
                             </header>
 
-                            <main className="main-area">
+                            <main className="main-area transition-all duration-300 pt-16">
                                 <div className="page">{children}</div>
                             </main>
                         </div>

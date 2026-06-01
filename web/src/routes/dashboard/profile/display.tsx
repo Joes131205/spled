@@ -40,7 +40,7 @@ function RouteComponent() {
             <div className="surface__body grid gap-12 p-10 sm:p-12 lg:grid-cols-[300px_minmax(0,1fr)]">
                 <div className="grid justify-items-center gap-6">
                     <div className="avatar-mark h-40 w-40 text-5xl shadow-xl rounded-[2.5rem]">
-                        {avatarPreview ? ( // shouldn't have to read from edit page functions, temporary
+                        {avatarPreview ? ( 
                             <img
                                 src={avatarPreview}
                                 alt="Avatar"

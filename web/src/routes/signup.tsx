@@ -29,8 +29,27 @@ function RouteComponent() {
             });
             return response.data;
         },
-        onSuccess: () => {
-            navigate({ to: "/login" });
+        onSuccess: (data) => {
+            if (!data || !data.user || !data.accessToken) {
+                navigate({ to: "/login" });
+                return;
+            }
+
+            try {
+                localStorage.clear();
+                localStorage.setItem("token", data.accessToken);
+                localStorage.setItem("email", data.user.email);
+                localStorage.setItem("username", data.user.username);
+                localStorage.setItem("userId", data.user.id);
+                localStorage.setItem("role", data.user.role || "MEMBER");
+                localStorage.setItem("displayName", data.user.displayName || data.user.username);
+                localStorage.setItem("avatarUrl", data.user.avatarUrl || "");
+                
+                window.location.href = "/dashboard";
+            } catch (e) {
+                console.error("Auto-login failed:", e);
+                navigate({ to: "/login" });
+            }
         },
         onError: (err: any) => {
             const msg = err.response?.data?.message || "Registration failed. Please try again.";

@@ -157,11 +157,11 @@ function RouteComponent() {
     }
 
     return (
-        <div className="grid gap-6">
-            <div className="surface">
-                <div className="surface__body max-w-2xl">
-                    <p className="kicker">Task</p>
-                    <h1 className="page-title">Edit task</h1>
+        <div className="flex min-h-[85vh] items-center justify-center p-6">
+            <div className="surface w-full max-w-4xl shadow-xl">
+                <div className="surface__body p-8 sm:p-10">
+                    <p className="kicker mb-1.5">Task</p>
+                    <h1 className="text-3xl font-bold text-slate-900">Edit task</h1>
                     <p className="page-subtitle mt-3">
                         Update task details and assignments.
                     </p>

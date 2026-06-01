@@ -114,6 +114,14 @@ function RouteComponent() {
             return;
         }
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(formData.endDate);
+        if (selectedDate < today) {
+            setError("Deadline cannot be in the past");
+            return;
+        }
+
         updateProjectMutation.mutate({
             ...formData,
             leaderId: project.leaderId,
@@ -254,6 +262,7 @@ function RouteComponent() {
                                     name="endDate"
                                     value={formData.endDate}
                                     onChange={handleChange}
+                                    min={new Date().toISOString().split("T")[0]}
                                     className="input text-sm py-3 px-5"
                                     required
                                 />

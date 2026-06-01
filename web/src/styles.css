@@ -16,6 +16,23 @@
         @apply min-h-screen bg-slate-50 text-slate-900 antialiased;
         font-family: var(--font-sans);
     }
+
+    button, 
+    a, 
+    select, 
+    label,
+    [role="button"],
+    input[type="button"],
+    input[type="submit"],
+    input[type="range"],
+    input[type="file"]::file-selector-button {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    input:disabled {
+        cursor: not-allowed;
+    }
 }
 
 @layer components {
@@ -224,7 +241,7 @@
     }
 
     .button--leave {
-        @apply bg-[#8CCF6F] text-white hover:opacity-90;
+        @apply bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-100;
     }
 
     .button--ghost {
@@ -390,7 +407,7 @@
     }
 
     .dropdown-item--leave {
-        @apply text-[#8CCF6F] hover:bg-slate-50;
+        @apply text-rose-600 hover:bg-rose-50;
     }
 
     /* Role row */
@@ -415,7 +432,7 @@
     }
 
     .leave-btn {
-        @apply ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-500 transition hover:border-slate-300 hover:text-slate-700;
+        @apply ml-auto inline-flex items-center gap-1.5 rounded-full border border-rose-100 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-rose-600 transition hover:border-rose-200 hover:bg-rose-50;
     }
 
     /* Progress */

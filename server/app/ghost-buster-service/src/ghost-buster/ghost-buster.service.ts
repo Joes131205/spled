@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InactivityLevel } from '../generated/prisma/enums.js';
+import { InactivityLevel } from '@spled/prisma-ghost';
 import { prisma } from '../db/prisma.client.js';
 
 @Injectable()

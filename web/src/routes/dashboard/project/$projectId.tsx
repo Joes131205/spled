@@ -9,11 +9,12 @@ import {
     UserMinus,
     Calendar,
     FileText,
-    MoreVertical,
     UserPlus,
     X,
+    MoreVertical,
     Link as LinkIcon,
     LogOut,
+    Info,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectApi, authApi, evidenceApi } from "../../../utils/api";
@@ -232,7 +233,7 @@ function DonutChart({ segments, total, completed }: { segments: { value: number;
     );
 }
 
-function TaskProgressSlider({
+function TaskStatusDropdown({
     task,
     isAssigned,
     onUpdate,
@@ -245,49 +246,52 @@ function TaskProgressSlider({
     hasEvidence: boolean;
     isApproved: boolean;
 }) {
-    const [localProgress, setLocalProgress] = useState(task.status === "DONE" ? 100 : (task.progress ?? 0));
+    const statusOptions = [
+        { label: "Not started", value: 0 },
+        { label: "Just started", value: 25 },
+        { label: "Halfway done", value: 50 },
+        { label: "Almost done", value: 90 },
+        { label: "Done", value: 100 },
+    ];
 
-    useEffect(() => {
-        setLocalProgress(task.status === "DONE" ? 100 : (task.progress ?? 0));
-    }, [task.status, task.progress]);
+    const currentVal = task.status === "DONE" ? 100 : (task.progress ?? 0);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let val = Number(e.target.value);
-        if (!isApproved && val > 90) val = 90;
-        setLocalProgress(val);
-    };
-
-    const handleCommit = () => {
-        if (localProgress !== (task.progress ?? 0)) {
-            onUpdate(localProgress);
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = Number(e.target.value);
+        if (val !== currentVal) {
+            onUpdate(val);
         }
     };
 
     return (
-        <div className="flex flex-col gap-1 w-36 relative z-10">
-            <div className="flex items-center gap-2">
-                <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={localProgress}
-                    onChange={handleChange}
-                    onMouseUp={handleCommit}
-                    onKeyUp={handleCommit}
-                    disabled={!isAssigned || isApproved}
-                    className="flex-1 h-2 bg-gray-200 rounded-full appearance-none cursor-pointer"
-                    style={{ 
-                        accentColor: "#00008B",
-                        WebkitAppearance: "slider-horizontal" 
-                    }}
-                />
-                <span className="text-xs font-bold text-gray-700 w-8 shrink-0">{localProgress}%</span>
-            </div>
-            {!isApproved && localProgress >= 90 && !hasEvidence && (
-                <span className="text-[10px] text-orange-600 font-bold">↑ Upload evidence for 100%</span>
+        <div className="flex flex-col gap-1 w-40 relative z-10">
+            <select
+                value={currentVal}
+                onChange={handleChange}
+                disabled={!isAssigned || isApproved}
+                className="w-full text-[10px] font-bold py-1.5 px-2 border border-gray-200 rounded-lg bg-white text-gray-700 focus:ring-1 focus:ring-[#00008B] outline-none disabled:bg-gray-50 disabled:text-gray-400 appearance-none cursor-pointer pr-7"
+                style={{ 
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundSize: '0.8rem'
+                }}
+            >
+                {statusOptions.map((opt) => (
+                    <option 
+                        key={opt.value} 
+                        value={opt.value}
+                        disabled={opt.value === 100 && !isApproved}
+                    >
+                        {opt.label} ({opt.value}%)
+                    </option>
+                ))}
+            </select>
+            {!isApproved && currentVal >= 90 && !hasEvidence && (
+                <span className="text-[9px] text-orange-600 font-bold leading-tight mt-0.5">↑ Upload evidence for 100%</span>
             )}
-            {!isApproved && hasEvidence && localProgress >= 90 && (
-                <span className="text-[10px] text-[#00008B] font-bold">✓ Waiting for approval</span>
+            {!isApproved && hasEvidence && currentVal >= 90 && (
+                <span className="text-[9px] text-[#00008B] font-bold leading-tight mt-0.5">✓ Waiting for approval</span>
             )}
         </div>
     );
@@ -513,7 +517,7 @@ function TaskRow({
     project,
     isLeader,
     onUpdate,
-    onDelete,
+    onDeleteClick,
     onClaim,
 }: {
     task: Task;
@@ -521,12 +525,13 @@ function TaskRow({
     project: Project;
     isLeader: boolean;
     onUpdate: (val: number) => void;
-    onDelete: () => void;
+    onDeleteClick: (taskId: string, taskName: string) => void;
     onClaim: () => void;
 }) {
     const queryClient = useQueryClient();
     const [activeEvidenceInput, setActiveEvidenceInput] = useState(false);
     const [viewingEvidence, setViewingEvidence] = useState(false);
+    const [showActions, setShowActions] = useState(false);
     
     const { data: evidenceList } = useQuery({
         queryKey: ["evidence", task.id],
@@ -612,29 +617,6 @@ function TaskRow({
     const stat = statusMap[task.status];
     const pts = task.pts ?? (task.weight === "HARD" ? 3 : task.weight === "MEDIUM" ? 2 : 1);
 
-    const [menuOpen, setMenuOpen] = useState(false);
-    const menuRef = React.useRef<HTMLDivElement>(null);
-    const buttonRef = React.useRef<HTMLButtonElement>(null);
-
-    useEffect(() => {
-        const handleClose = () => setMenuOpen(false);
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                handleClose();
-            }
-        };
-
-        if (menuOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-            window.addEventListener("scroll", handleClose, true);
-        }
-
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-            window.removeEventListener("scroll", handleClose, true);
-        };
-    }, [menuOpen]);
-
     return (
         <tr className="hover:bg-gray-50/50 transition-colors">
             <td className="px-6 py-4">
@@ -658,7 +640,7 @@ function TaskRow({
             </td>
             <td className="px-4 py-4">
                 {!isLecturer ? (
-                    <TaskProgressSlider 
+                    <TaskStatusDropdown 
                         task={task}
                         isAssigned={isAssignedToMe} 
                         hasEvidence={hasEvidence}
@@ -749,36 +731,37 @@ function TaskRow({
                 </div>
             </td>
             {isLeader && (
-                <td className="px-4 py-4 w-16 text-right relative">
-                    <button
-                        ref={buttonRef}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setMenuOpen(!menuOpen);
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                        <MoreVertical className="h-4 w-4 text-gray-500" />
-                    </button>
-                    {menuOpen && (
-                        <div
-                            ref={menuRef}
-                            className="absolute right-6 top-12 bg-white border border-gray-100 shadow-2xl rounded-xl py-1.5 w-32 z-[100] animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5"
+                <td className="px-4 py-4 w-28 text-right">
+                    {!showActions ? (
+                        <button
+                            onClick={() => setShowActions(true)}
+                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Show Actions"
                         >
+                            <MoreVertical className="h-4 w-4 text-gray-500" />
+                        </button>
+                    ) : (
+                        <div className="flex items-center justify-end gap-1 animate-in fade-in slide-in-from-right-2 duration-200">
                             <Link
                                 to={`/dashboard/task/${task.id}/edit`}
-                                className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50 hover:text-[#00008B] transition-colors w-full"
+                                className="p-2 text-gray-400 hover:text-[#00008B] hover:bg-indigo-50 rounded-xl transition-all"
+                                title="Edit Task"
                             >
-                                <Edit2 className="h-3.5 w-3.5" />
-                                Edit Task
+                                <Edit2 className="h-4 w-4" />
                             </Link>
-                            <div className="h-px bg-gray-50 mx-2 my-1" />
                             <button
-                                onClick={() => { setMenuOpen(false); onDelete(); }}
-                                className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-500 hover:bg-rose-50 transition-colors w-full"
+                                onClick={() => onDeleteClick(task.id, task.name)}
+                                className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                title="Delete Task"
                             >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                Delete Task
+                                <Trash2 className="h-4 w-4" />
+                            </button>
+                            <button
+                                onClick={() => setShowActions(false)}
+                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                                title="Cancel"
+                            >
+                                <X className="h-4 w-4" />
                             </button>
                         </div>
                     )}
@@ -797,6 +780,16 @@ function RouteComponent() {
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteError, setInviteError] = useState("");
     const [isLecturer, setIsLecturer] = useState(false);
+
+    const [deleteTaskModal, setDeleteTaskModal] = useState<{
+        isOpen: boolean;
+        taskId: string;
+        taskName: string;
+    }>({
+        isOpen: false,
+        taskId: "",
+        taskName: "",
+    });
 
     const [kickModal, setKickModal] = useState<{
         isOpen: boolean;
@@ -1158,13 +1151,19 @@ function RouteComponent() {
                                             progress: val, 
                                             status: val === 100 ? "DONE" : "IN_PROGRESS" 
                                         })}
-                                        onDelete={() => deleteTaskMutation.mutate(task.id)}
+                                        onDeleteClick={(tId, tName) => setDeleteTaskModal({ isOpen: true, taskId: tId, taskName: tName })}
                                         onClaim={() => claimTaskMutation.mutate(task.id)}
                                     />
                                 ))
                             )}
                         </tbody>
                     </table>
+                </div>
+                <div className="px-7 py-4 bg-slate-50/80 border-t border-gray-100 flex items-center gap-3">
+                    <Info className="h-4 w-4 text-indigo-500 shrink-0" />
+                    <p className="text-[11px] text-gray-500 font-medium leading-relaxed italic">
+                        Note: Leaders may approve members' evidence, except for their own; a member must approve the leader's evidence.
+                    </p>
                 </div>
             </div>
 
@@ -1275,6 +1274,55 @@ function RouteComponent() {
                                     ) : (
                                         "Send Invitation"
                                     )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {deleteTaskModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden relative">
+                        <button
+                            type="button"
+                            onClick={() => setDeleteTaskModal({ ...deleteTaskModal, isOpen: false })}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        <div className="px-6 py-5 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900 text-red-600">Delete Task</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Are you sure you want to delete <span className="font-bold text-gray-900">"{deleteTaskModal.taskName}"</span>?
+                            </p>
+                        </div>
+
+                        <div className="p-6">
+                            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                                This action cannot be undone. All progress and evidence associated with this task will be permanently removed.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setDeleteTaskModal({ ...deleteTaskModal, isOpen: false })}
+                                    className="flex-1 py-2.5 border border-gray-200 text-gray-600 text-sm font-bold rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Stay here
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => deleteTaskMutation.mutate(deleteTaskModal.taskId)}
+                                    disabled={deleteTaskMutation.isPending}
+                                    className="flex-[2] py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {deleteTaskMutation.isPending ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                    )}
+                                    {deleteTaskMutation.isPending ? "Deleting..." : "Confirm Delete"}
                                 </button>
                             </div>
                         </div>

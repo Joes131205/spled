@@ -214,7 +214,7 @@ function RouteComponent() {
                                 <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg ${
                                     confirmModal.type === "delete" 
                                         ? "bg-rose-50 text-rose-600 shadow-rose-100" 
-                                        : "bg-amber-50 text-amber-600 shadow-amber-100"
+                                        : "bg-rose-50 text-rose-600 shadow-rose-100"
                                 }`}>
                                     {confirmModal.type === "delete" ? (
                                         <Trash2 className="h-7 w-7" />
@@ -259,7 +259,7 @@ function RouteComponent() {
                                     className={`px-6 py-3.5 text-sm font-bold text-white rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${
                                         confirmModal.type === "delete"
                                             ? "bg-rose-600 hover:bg-rose-700 shadow-rose-100"
-                                            : "bg-amber-600 hover:bg-amber-700 shadow-amber-100"
+                                            : "bg-rose-600 hover:bg-rose-700 shadow-rose-100"
                                     }`}
                                 >
                                     {(deleteProjectMutation.isPending || leaveProjectMutation.isPending) ? (

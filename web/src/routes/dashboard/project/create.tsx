@@ -129,6 +129,17 @@ function RouteComponent() {
             newFieldErrors.endDate = "A deadline is required";
         }
 
+        if (!formData.endDate) {
+            newFieldErrors.endDate = "Deadline is required";
+        } else {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const selectedDate = new Date(formData.endDate);
+            if (selectedDate < today) {
+                newFieldErrors.endDate = "Deadline cannot be in the past";
+            }
+        }
+
         const validMembers = teamMembers.filter(m => m.task.trim() || m.email.trim());
 
         for (let i = 0; i < teamMembers.length; i++) {
@@ -348,6 +359,7 @@ function RouteComponent() {
                                     name="endDate"
                                     value={formData.endDate}
                                     onChange={handleChange}
+                                    min={new Date().toISOString().split("T")[0]}
                                     className={`input text-sm py-3 px-5 transition-all ${fieldErrors.endDate ? "border-rose-500 bg-rose-50/30 focus:border-rose-600 focus:ring-rose-100" : ""}`}
                                 />
                                 {fieldErrors.endDate ? (
