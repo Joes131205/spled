@@ -7,8 +7,9 @@ import {
   Param,
   UseGuards,
   Query,
+  Res,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -16,6 +17,7 @@ import {
   ApiTags,
   ApiQuery,
 } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { createUserDto } from '../utils/dto/createUserDto';
 import { loginUserDto } from '../utils/dto/loginUserDto';
@@ -48,6 +50,24 @@ export class AuthController {
   @ApiBody({ type: loginUserDto })
   login(@Body() body: loginUserDto) {
     return this.authService.login(body);
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Login with Google' })
+  async googleAuth(@Req() req) {}
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Google auth callback' })
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+    const result = await this.authService.validateGoogleUser(req.user);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const params = new URLSearchParams({
+      token: result.accessToken,
+      userId: result.user.id,
+    });
+    return res.redirect(`${frontendUrl}/auth-callback?${params.toString()}`);
   }
 
   @Get('users/:userId')

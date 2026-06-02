@@ -86,7 +86,6 @@ function RootDocument({ children }: { children: ReactNode }) {
     const [isMounted, setIsMounted] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-    // Use effect to handle mounting state for hydration safety
     React.useEffect(() => {
         setIsMounted(true);
     }, []);
@@ -204,7 +203,6 @@ function RootDocument({ children }: { children: ReactNode }) {
                     children
                 ) : (
                     <div className={`app-shell transition-all duration-300 ${sidebarCollapsed ? "lg:grid-cols-[0px_minmax(0,1fr)]" : "lg:grid-cols-[280px_minmax(0,1fr)]"}`}>
-                        {/* Mobile Sidebar Overlay */}
                         {sidebarOpen && (
                             <div 
                                 className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden transition-opacity animate-in fade-in"
@@ -303,7 +301,6 @@ function RootDocument({ children }: { children: ReactNode }) {
                         </aside>
 
                         <div className="content-shell relative">
-                            {/* Desktop Sidebar Toggle - Floating & Sticky */}
                             <div className="hidden lg:block sticky top-6 left-6 z-50 h-0 w-0 overflow-visible">
                                 <button 
                                     onClick={() => setSidebarCollapsed(!sidebarCollapsed)}

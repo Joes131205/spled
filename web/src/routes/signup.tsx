@@ -363,7 +363,11 @@ function RouteComponent() {
                         <div className="flex-1 border-t border-slate-200" />
                     </div>
 
-                    <button type="button" className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+                    <button 
+                        type="button" 
+                        onClick={() => window.location.href = 'http://127.0.0.1:3001/auth/google'}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+                    >
                         <img src="https://www.google.com/favicon.ico" alt="Google" className="h-4 w-4" />
                         Sign up with Google
                     </button>

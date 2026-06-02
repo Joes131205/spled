@@ -888,7 +888,6 @@ function RouteComponent() {
                 setInviteError("Email is not registered");
                 setIsLecturer(false);
             } else {
-                // Check if already a member
                 if (project?.members.some(member => member.userId === response.data.id)) {
                     setInviteError("This user is already a member of the project");
                     return;

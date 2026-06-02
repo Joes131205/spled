@@ -14,6 +14,7 @@ function RouteComponent() {
     );
 
     const username = localStorage.getItem("username") || "";
+    const email = localStorage.getItem("email") || "";
 
     const [displayName, setDisplayName] = useState(
         localStorage.getItem("displayName") || "",
@@ -66,7 +67,7 @@ function RouteComponent() {
                     <div className="field">
                         <label className="label text-base">E-mail</label>
                         <div className="input text-base py-4 px-6 bg-slate-50/50">
-                            {username}@example.com
+                            {email || `${username}@example.com`}
                         </div>
                     </div>
 
