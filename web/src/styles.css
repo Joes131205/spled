@@ -10,6 +10,7 @@
     html {
         @apply bg-slate-50 text-slate-900;
         font-family: var(--font-sans);
+        font-size: 80%;
     }
 
     body {

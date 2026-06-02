@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { Calendar, MoreVertical, Plus, Trash2, Edit2, LogOut, Users, Loader2, Mail, AlertCircle, X } from "lucide-react";
+import { Calendar, MoreVertical, Plus, Trash2, Edit2, LogOut, Users, Loader2, Mail, AlertCircle, X, Bell } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { projectApi } from "../../utils/api";
+import { projectApi, ghostBusterApi } from "../../utils/api";
 
 export const Route = createFileRoute("/dashboard/")({
     component: RouteComponent,
@@ -201,6 +201,53 @@ function RouteComponent() {
         return Math.round((doneTasks / tasks.length) * 100);
     };
 
+    // Calculate global warnings across all projects
+    const globalWarnings: { projectId: string; projectName: string; type: "FLAGGED" | "H-3" | "H-2" | "H-1" | "OVERDUE" }[] = [];
+    const projectWarnings: Record<string, "H-3" | "H-2" | "H-1" | "OVERDUE"> = {};
+    
+    projects.forEach(project => {
+        if (isLecturer || !userId) return;
+        
+        // Find if user is in this project
+        const myMember = project.members?.find(m => m.userId === userId);
+        if (!myMember) return;
+
+        const unfinishedTasks = project.tasks?.filter(t => t.assignedTo === userId && t.status !== "DONE") || [];
+        
+        if (unfinishedTasks.length > 0 && project.endDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const deadline = new Date(project.endDate);
+            deadline.setHours(0, 0, 0, 0);
+            const diffTime = deadline.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            let warningType: "H-3" | "H-2" | "H-1" | "OVERDUE" | null = null;
+            if (diffDays === 3) warningType = "H-3";
+            else if (diffDays === 2) warningType = "H-2";
+            else if (diffDays === 1 || diffDays === 0) warningType = "H-1";
+            else if (diffDays < 0) warningType = "OVERDUE";
+
+            if (warningType) {
+                // For the small reminder on the project card itself (always shows if near deadline)
+                projectWarnings[project.id] = warningType;
+
+                // For the aggressive global banner: only show if they haven't started (progress === 0) 
+                // OR haven't updated their tasks recently (e.g. > 24 hours ago)
+                const hasStaleTasks = unfinishedTasks.some(t => {
+                    if (!t.progress || t.progress === 0) return true; // Hasn't even started
+                    const updatedTime = new Date(t.updatedAt || new Date(0)).getTime();
+                    const hoursSinceUpdate = (Date.now() - updatedTime) / (1000 * 60 * 60);
+                    return hoursSinceUpdate > 24;
+                });
+
+                if (hasStaleTasks) {
+                    globalWarnings.push({ projectId: project.id, projectName: project.name, type: warningType });
+                }
+            }
+        }
+    });
+
     return (
         <div className="grid gap-8 py-4">
             {confirmModal.isOpen && (
@@ -324,6 +371,60 @@ function RouteComponent() {
                 </div>
             )}
 
+            {globalWarnings.length > 0 && (
+                <div className="flex flex-col gap-2">
+                    {globalWarnings.map((warning, i) => (
+                        <div 
+                            key={`${warning.projectId}-${i}`}
+                            className={`rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm animate-in fade-in slide-in-from-top-4 ${
+                                warning.type === 'H-3' ? 'bg-yellow-50 border-yellow-200' :
+                                warning.type === 'H-2' ? 'bg-orange-50 border-orange-200' :
+                                'bg-red-50 border-red-200 animate-pulse'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-sm ${
+                                    warning.type === 'H-3' ? 'bg-yellow-500 text-white' :
+                                    warning.type === 'H-2' ? 'bg-orange-500 text-white' :
+                                    'bg-red-600 text-white'
+                                }`}>
+                                    <Bell className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p className={`text-sm font-bold ${
+                                        warning.type === 'H-3' ? 'text-yellow-900' :
+                                        warning.type === 'H-2' ? 'text-orange-900' :
+                                        'text-red-900'
+                                    }`}>
+                                        Action Required in "{warning.projectName}"
+                                    </p>
+                                    <p className={`text-xs ${
+                                        warning.type === 'H-3' ? 'text-yellow-700' :
+                                        warning.type === 'H-2' ? 'text-orange-700' :
+                                        'text-red-700'
+                                    }`}>
+                                        {warning.type === 'OVERDUE' ? 'The project deadline has passed! Complete your pending tasks immediately.' :
+                                         warning.type === 'H-1' ? 'The deadline is Tomorrow! Complete your pending tasks NOW.' :
+                                         `The deadline is approaching (${warning.type}). Please update your pending tasks.`}
+                                    </p>
+                                </div>
+                            </div>
+                            <Link
+                                to="/dashboard/project/$projectId"
+                                params={{ projectId: warning.projectId }}
+                                className={`text-xs font-bold px-4 py-2 rounded-lg shadow-sm border transition-all hover:shadow-md bg-white ${
+                                    warning.type === 'H-3' ? 'text-yellow-700 border-yellow-100 hover:text-yellow-800' :
+                                    warning.type === 'H-2' ? 'text-orange-700 border-orange-100 hover:text-orange-800' :
+                                    'text-red-700 border-red-100 hover:text-red-800'
+                                }`}
+                            >
+                                Go to Project
+                            </Link>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             <div className="projects-divider" />
 
             {isLoading ? (
@@ -359,9 +460,18 @@ function RouteComponent() {
                                             to: "/dashboard/project/$projectId", 
                                             params: { projectId: project.id } 
                                         })}
-                                        className="project-card__title group-hover:text-indigo-600 transition-colors text-left flex-1"
+                                        className="project-card__title group-hover:text-indigo-600 transition-colors text-left flex-1 flex items-center gap-2"
                                     >
-                                        {project.name}
+                                        <span className="truncate">{project.name}</span>
+                                        {projectWarnings[project.id] && (
+                                            <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm ${
+                                                projectWarnings[project.id] === 'H-3' ? 'bg-yellow-100 text-yellow-700' :
+                                                projectWarnings[project.id] === 'H-2' ? 'bg-orange-100 text-orange-700' :
+                                                'bg-red-100 text-red-700 animate-pulse'
+                                            }`}>
+                                                {projectWarnings[project.id] === 'OVERDUE' ? 'OVERDUE' : projectWarnings[project.id]}
+                                            </span>
+                                        )}
                                     </button>
                                     <div className="shrink-0">
                                         {isLeader ? (

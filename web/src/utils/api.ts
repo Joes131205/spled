@@ -9,6 +9,9 @@ const projectApi: AxiosInstance = axios.create({
 const evidenceApi: AxiosInstance = axios.create({
     baseURL: "http://127.0.0.1:3004",
 });
+const ghostBusterApi: AxiosInstance = axios.create({
+    baseURL: "http://127.0.0.1:3002",
+});
 
 const addAuthInterceptor = (instance: AxiosInstance): void => {
     instance.interceptors.request.use((config) => {
@@ -21,5 +24,6 @@ const addAuthInterceptor = (instance: AxiosInstance): void => {
 addAuthInterceptor(authApi);
 addAuthInterceptor(projectApi);
 addAuthInterceptor(evidenceApi);
+addAuthInterceptor(ghostBusterApi);
 
-export { authApi, projectApi, evidenceApi };
+export { authApi, projectApi, evidenceApi, ghostBusterApi };

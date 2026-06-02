@@ -17,7 +17,7 @@ import {
     Info,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { projectApi, authApi, evidenceApi } from "../../../utils/api";
+import { projectApi, authApi, evidenceApi, ghostBusterApi } from "../../../utils/api";
 
 export const Route = createFileRoute("/dashboard/project/$projectId")({
     component: RouteComponent,
@@ -75,12 +75,14 @@ function MemberRow({
     isLeader,
     onKick,
     canKick,
+    isFlagged,
 }: {
     userId: string;
     role: string;
     isLeader: boolean;
     onKick?: () => void;
     canKick: boolean;
+    isFlagged?: boolean;
 }) {
     const { data: user } = useQuery({
         queryKey: ["user", userId],
@@ -107,9 +109,16 @@ function MemberRow({
                     initials
                 )}
             </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{user?.username || "Loading..."}</p>
-                <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+            <div className="flex-1 min-w-0 flex items-center gap-2">
+                <div>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{user?.username || "Loading..."}</p>
+                    <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                </div>
+                {isFlagged && (
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 uppercase tracking-wider animate-pulse">
+                        FLAGGED
+                    </span>
+                )}
             </div>
             <div className="flex items-center gap-4">
                 {isLeader ? (
@@ -822,6 +831,20 @@ function RouteComponent() {
         },
     });
 
+    const { data: ghostBusterData } = useQuery({
+        queryKey: ["ghostBuster", projectId],
+        queryFn: async () => {
+            try {
+                const response = await ghostBusterApi.get(`/ghost-buster/${projectId}`);
+                return response.data;
+            } catch (error) {
+                return { items: [] };
+            }
+        },
+        enabled: !!projectId,
+    });
+    const flaggedMembers = ghostBusterData?.items || [];
+
     const inviteMemberMutation = useMutation({
         mutationFn: async (email: string) => {
             await projectApi.post(`/projects/${projectId}/invite`, { email });
@@ -997,8 +1020,64 @@ function RouteComponent() {
         }
     });
 
+    let warningLevel = 0;
+    let warningMessage = "";
+    
+    if (userId && !isLecturer) {
+        const currentUserMember = members.find(m => m.userId === userId);
+        if (currentUserMember) {
+            const isUserFlagged = flaggedMembers.some((flag: any) => flag.memberId === currentUserMember.id);
+            if (isUserFlagged) {
+                warningLevel = 4;
+                warningMessage = "GHOST WARNING: You have been flagged for prolonged inactivity! Update your tasks immediately or risk being removed.";
+            } else {
+                const hasUnfinishedTasks = tasks.some(t => t.assignedTo === userId && (t.status === "PENDING" || t.status === "IN_PROGRESS"));
+                if (hasUnfinishedTasks && project.endDate) {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const deadline = new Date(project.endDate);
+                    deadline.setHours(0, 0, 0, 0);
+                    const diffTime = deadline.getTime() - today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays === 3) {
+                        warningLevel = 1;
+                        warningMessage = "WARNING (H-3): The deadline is approaching. Please update your 'In Progress' tasks soon.";
+                    } else if (diffDays === 2) {
+                        warningLevel = 2;
+                        warningMessage = "URGENT (H-2): The deadline is very close! Update your tasks immediately.";
+                    } else if (diffDays === 1 || diffDays === 0) {
+                        warningLevel = 3;
+                        warningMessage = "CRITICAL (H-1): Project deadline is imminent! Update your tasks NOW.";
+                    } else if (diffDays < 0) {
+                        warningLevel = 3;
+                        warningMessage = "CRITICAL: The project deadline has passed! Please complete your pending tasks.";
+                    }
+                }
+            }
+        }
+    }
+
     return (
         <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
+            {warningLevel > 0 && (
+                <div className={`rounded-xl border p-4 flex items-start gap-3 shadow-sm ${
+                    warningLevel === 1 ? 'bg-yellow-50 border-yellow-200 text-yellow-800' :
+                    warningLevel === 2 ? 'bg-orange-50 border-orange-200 text-orange-800' :
+                    warningLevel === 3 ? 'bg-red-50 border-red-200 text-red-800 animate-pulse' :
+                    'bg-rose-600 border-rose-700 text-white animate-pulse shadow-rose-200 shadow-lg'
+                }`}>
+                    <Info className={`h-5 w-5 shrink-0 ${warningLevel === 4 ? 'text-white' : ''}`} />
+                    <div>
+                        <p className={`font-bold text-sm ${warningLevel === 4 ? 'text-white' : ''}`}>
+                            {warningLevel === 4 ? "GHOST BUSTER PROTOCOL ACTIVE" : "Automated Deadline Reminder"}
+                        </p>
+                        <p className={`text-sm mt-0.5 ${warningLevel === 4 ? 'text-white/90' : 'opacity-90'}`}>
+                            {warningMessage}
+                        </p>
+                    </div>
+                </div>
+            )}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
                 <div className="px-7 py-6">
                     <div className="flex items-start justify-between gap-4">
