@@ -32,10 +32,15 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
                 content: "width=device-width, initial-scale=1",
             },
             {
-                title: "Spled - Group Task Splitter",
+                title: "Spled",
             },
         ],
         links: [
+            {
+                rel: "icon",
+                type: "image/png",
+                href: "/logo.png",
+            },
             {
                 rel: "stylesheet",
                 href: appCss,
