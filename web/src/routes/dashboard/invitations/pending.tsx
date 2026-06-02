@@ -200,11 +200,11 @@ function RouteComponent() {
             )}
 
             <div className="surface w-full max-w-4xl shadow-2xl">
-                <div className="surface__body p-10 sm:p-12">
-                    <div className="mb-10 flex justify-between items-start">
+                <div className="surface__body p-6 sm:p-10 lg:p-12">
+                    <div className="mb-10 flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0">
                         <div>
                             <p className="kicker mb-2 text-sm font-semibold">Account</p>
-                            <h1 className="text-4xl font-bold text-slate-900">
+                            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
                                 Invitations
                             </h1>
                             <p className="text-slate-500 mt-2">
@@ -257,8 +257,8 @@ function RouteComponent() {
                     ) : (
                         <div className="grid gap-4">
                             {currentList.map((invitation) => (
-                                <div key={invitation.id} className="p-6 rounded-3xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-6 transition-all hover:shadow-md hover:bg-white group relative">
-                                    <div className="flex gap-5 flex-1">
+                                <div key={invitation.id} className="p-4 sm:p-6 rounded-3xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 transition-all hover:shadow-md hover:bg-white group relative">
+                                    <div className="flex gap-4 sm:gap-5 flex-1 w-full">
                                         <LeaderAvatar userId={invitation.project.leaderId} />
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-1">
@@ -305,7 +305,7 @@ function RouteComponent() {
                                     </div>
 
                                     {activeTab === "pending" ? (
-                                        <div className="flex gap-3">
+                                        <div className="flex gap-3 sm:w-auto w-full justify-end sm:pl-0 pl-[72px]">
                                             <button
                                                 onClick={() => handleRespond(invitation.id, "ACCEPTED")}
                                                 className="h-12 w-12 rounded-2xl bg-[#00008B] text-white flex items-center justify-center shadow-lg shadow-indigo-200 hover:bg-[#000066] transition-all"
@@ -322,7 +322,7 @@ function RouteComponent() {
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center">
+                                        <div className="flex items-center sm:w-auto w-full justify-end sm:pl-0 pl-[72px]">
                                             <button
                                                 onClick={() => handleDelete(invitation.id)}
                                                 className="p-3 text-slate-300 hover:text-rose-600 transition-colors"

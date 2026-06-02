@@ -133,9 +133,9 @@ function RouteComponent() {
     };
 
     return (
-        <div className="min-h-screen flex">
+        <div className="min-h-screen flex flex-col lg:flex-row">
             <div
-                className="hidden lg:flex lg:w-[58%] xl:w-[62%] flex-col items-center justify-center relative overflow-hidden"
+                className="flex lg:w-[58%] xl:w-[62%] flex-col items-center justify-center relative overflow-hidden py-12 lg:py-0"
                 style={{
                     backgroundColor: "#000000",
                     backgroundImage: "radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.35) 0px, transparent 50%)",

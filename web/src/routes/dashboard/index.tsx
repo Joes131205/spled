@@ -326,9 +326,9 @@ function RouteComponent() {
             <div className="flex flex-col gap-2">
                 <div className="space-y-1">
                     <p className="text-xs font-bold tracking-[0.24em] uppercase text-[#00008B]">Workspace</p>
-                    <h1 className="page-title text-4xl font-bold">Projects</h1>
+                    <h1 className="page-title text-3xl sm:text-4xl font-bold">Projects</h1>
                 </div>
-                <p className="page-subtitle text-xl max-w-2xl leading-relaxed mt-1">
+                <p className="page-subtitle text-lg sm:text-xl max-w-2xl leading-relaxed mt-1">
                     Keep track of what your teams are building
                 </p>
             </div>
@@ -352,9 +352,9 @@ function RouteComponent() {
             </div>
 
             {invitations.length > 0 && (
-                <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4">
+                <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4">
                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-100">
+                        <div className="h-10 w-10 shrink-0 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-100">
                             <Mail className="h-5 w-5" />
                         </div>
                         <div>
@@ -364,7 +364,7 @@ function RouteComponent() {
                     </div>
                     <Link
                         to="/dashboard/invitations/pending"
-                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-white px-4 py-2 rounded-lg shadow-sm border border-indigo-50 transition-all hover:shadow-md"
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-white px-4 py-2 rounded-lg shadow-sm border border-indigo-50 transition-all hover:shadow-md shrink-0 w-full sm:w-auto text-center"
                     >
                         View Invitations
                     </Link>
@@ -376,14 +376,14 @@ function RouteComponent() {
                     {globalWarnings.map((warning, i) => (
                         <div 
                             key={`${warning.projectId}-${i}`}
-                            className={`rounded-2xl p-4 flex items-center justify-between gap-4 border shadow-sm animate-in fade-in slide-in-from-top-4 ${
+                            className={`rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border shadow-sm animate-in fade-in slide-in-from-top-4 ${
                                 warning.type === 'H-3' ? 'bg-yellow-50 border-yellow-200' :
                                 warning.type === 'H-2' ? 'bg-orange-50 border-orange-200' :
                                 'bg-red-50 border-red-200 animate-pulse'
                             }`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-sm ${
+                                <div className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center shadow-sm ${
                                     warning.type === 'H-3' ? 'bg-yellow-500 text-white' :
                                     warning.type === 'H-2' ? 'bg-orange-500 text-white' :
                                     'bg-red-600 text-white'
@@ -412,7 +412,7 @@ function RouteComponent() {
                             <Link
                                 to="/dashboard/project/$projectId"
                                 params={{ projectId: warning.projectId }}
-                                className={`text-xs font-bold px-4 py-2 rounded-lg shadow-sm border transition-all hover:shadow-md bg-white ${
+                                className={`text-xs font-bold px-4 py-2 rounded-lg shadow-sm border transition-all hover:shadow-md bg-white shrink-0 w-full sm:w-auto text-center ${
                                     warning.type === 'H-3' ? 'text-yellow-700 border-yellow-100 hover:text-yellow-800' :
                                     warning.type === 'H-2' ? 'text-orange-700 border-orange-100 hover:text-orange-800' :
                                     'text-red-700 border-red-100 hover:text-red-800'

@@ -204,30 +204,42 @@ function RootDocument({ children }: { children: ReactNode }) {
                     children
                 ) : (
                     <div className={`app-shell transition-all duration-300 ${sidebarCollapsed ? "lg:grid-cols-[0px_minmax(0,1fr)]" : "lg:grid-cols-[280px_minmax(0,1fr)]"}`}>
+                        {/* Mobile Sidebar Overlay */}
+                        {sidebarOpen && (
+                            <div 
+                                className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden transition-opacity animate-in fade-in"
+                                onClick={() => setSidebarOpen(false)}
+                            />
+                        )}
+
                         <aside
-                            className={`app-sidebar flex flex-col transition-all duration-300 overflow-hidden ${sidebarCollapsed ? "lg:w-0 lg:px-0 lg:opacity-0 lg:pointer-events-none" : "lg:w-72 lg:px-6 lg:opacity-100"}`}
-                            style={{
-                                transform: sidebarOpen
-                                    ? "translateX(0)"
-                                    : undefined,
-                            }}
+                            className={`app-sidebar flex flex-col transition-all duration-300 overflow-hidden z-50 ${sidebarCollapsed ? "lg:w-0 lg:px-0 lg:opacity-0 lg:pointer-events-none" : "lg:w-72 lg:px-6 lg:opacity-100"} ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
                         >
-                            <div className="app-sidebar__brand flex items-center gap-3">
-                                <div className="brand-mark bg-white border border-slate-100 overflow-hidden p-2 shrink-0">
-                                    <img src="/logo.png" alt="Spled" className="h-full w-full object-contain" />
-                                </div>
-                                <div className="flex-1 truncate">
-                                    <div className="brand-name text-xl truncate">Spled</div>
-                                    <div className="brand-subtitle truncate">
-                                        Group task splitter
+                            <div className="app-sidebar__brand flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="brand-mark bg-white border border-slate-100 overflow-hidden p-2 shrink-0">
+                                        <img src="/logo.png" alt="Spled" className="h-full w-full object-contain" />
+                                    </div>
+                                    <div className="flex-1 truncate">
+                                        <div className="brand-name text-xl truncate">Spled</div>
+                                        <div className="brand-subtitle truncate">
+                                            Group task splitter
+                                        </div>
                                     </div>
                                 </div>
+                                <button 
+                                    className="lg:hidden p-2 text-slate-400 hover:bg-slate-100 rounded-xl"
+                                    onClick={() => setSidebarOpen(false)}
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
                             </div>
 
                             <nav className="nav-stack flex-1">
                                 <p className="nav-section-title">Workspace</p>
                                 <Link
                                     to="/dashboard"
+                                    onClick={() => setSidebarOpen(false)}
                                     className={linkClass("/dashboard")}
                                 >
                                     <LayoutDashboard className="h-4 w-4 shrink-0" />
@@ -237,6 +249,7 @@ function RootDocument({ children }: { children: ReactNode }) {
                                 <p className="nav-section-title">Account</p>
                                 <Link
                                     to="/dashboard/profile/display"
+                                    onClick={() => setSidebarOpen(false)}
                                     className={linkClass(
                                         "/dashboard/profile/display"
                                     )}
@@ -246,6 +259,7 @@ function RootDocument({ children }: { children: ReactNode }) {
                                 </Link>
                                 <Link
                                     to="/dashboard/invitations/pending"
+                                    onClick={() => setSidebarOpen(false)}
                                     className={linkClass(
                                         "/dashboard/invitations/pending"
                                     )}

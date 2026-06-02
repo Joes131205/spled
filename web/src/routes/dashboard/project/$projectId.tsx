@@ -740,7 +740,7 @@ function TaskRow({
                 </div>
             </td>
             {isLeader && (
-                <td className="px-4 py-4 w-28 text-right">
+                <td className="px-2 sm:px-4 py-4 w-auto sm:w-28 text-right relative">
                     {!showActions ? (
                         <button
                             onClick={() => setShowActions(true)}
@@ -750,24 +750,24 @@ function TaskRow({
                             <MoreVertical className="h-4 w-4 text-gray-500" />
                         </button>
                     ) : (
-                        <div className="flex items-center justify-end gap-1 animate-in fade-in slide-in-from-right-2 duration-200">
+                        <div className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 flex items-center gap-0.5 sm:gap-1 animate-in fade-in slide-in-from-right-2 duration-200 bg-white px-1 py-1 rounded-lg shadow-md border border-gray-100 z-10 whitespace-nowrap">
                             <Link
                                 to={`/dashboard/task/${task.id}/edit`}
-                                className="p-2 text-gray-400 hover:text-[#00008B] hover:bg-indigo-50 rounded-xl transition-all"
+                                className="p-1.5 sm:p-2 text-gray-400 hover:text-[#00008B] hover:bg-indigo-50 rounded-xl transition-all"
                                 title="Edit Task"
                             >
                                 <Edit2 className="h-4 w-4" />
                             </Link>
                             <button
                                 onClick={() => onDeleteClick(task.id, task.name)}
-                                className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                className="p-1.5 sm:p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
                                 title="Delete Task"
                             >
                                 <Trash2 className="h-4 w-4" />
                             </button>
                             <button
                                 onClick={() => setShowActions(false)}
-                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                                className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
                                 title="Cancel"
                             >
                                 <X className="h-4 w-4" />
@@ -928,7 +928,10 @@ function RouteComponent() {
         mutationFn: async (taskId: string) => {
             await projectApi.delete(`/tasks/${taskId}`);
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects", projectId] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
+            setDeleteTaskModal({ isOpen: false, taskId: "", taskName: "" });
+        },
     });
 
     const kickMemberMutation = useMutation({

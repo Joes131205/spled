@@ -90,12 +90,12 @@ function RouteComponent() {
     const saving = updateProfileMutation.isPending;
 
     return (
-        <div className="flex min-h-[85vh] items-center justify-center p-6">
+        <div className="flex min-h-[85vh] items-center justify-center p-4 sm:p-6">
             <div className="surface w-full max-w-4xl shadow-2xl">
-                <div className="surface__header flex items-center justify-between gap-4 p-10 sm:p-12">
+                <div className="surface__header flex items-center justify-between gap-4 p-6 sm:p-10 lg:p-12">
                     <div>
                         <p className="kicker mb-2 text-sm font-semibold">Profile</p>
-                        <h1 className="text-4xl font-bold text-slate-900">
+                        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
                             Edit Profile
                         </h1>
                     </div>
@@ -104,7 +104,7 @@ function RouteComponent() {
                 {false ? ( 
                     <div className="empty-state">Loading...</div>
                 ) : (
-                    <div className="surface__body grid gap-12 p-10 sm:p-12 lg:grid-cols-[300px_minmax(0,1fr)]">
+                    <div className="surface__body grid gap-8 sm:gap-12 p-6 sm:p-10 lg:p-12 lg:grid-cols-[300px_minmax(0,1fr)]">
                         <div className="grid justify-items-center gap-6">
                             <div className="avatar-mark h-40 w-40 text-5xl shadow-xl rounded-[2.5rem]">
                                 {avatarPreview ? (
