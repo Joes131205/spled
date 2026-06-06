@@ -292,7 +292,7 @@ function TaskStatusDropdown({
                         value={opt.value}
                         disabled={opt.value === 100 && !isApproved}
                     >
-                        {opt.label} ({opt.value}%)
+                        {opt.label}
                     </option>
                 ))}
             </select>
@@ -618,12 +618,6 @@ function TaskRow({
         EASY: { label: "Easy", cls: "bg-green-100 text-green-700" },
     }[task.weight];
 
-    const statusMap = {
-        DONE: { label: "Done", cls: "bg-green-100 text-green-700 px-2.5 py-0.5 rounded text-xs font-semibold" },
-        IN_PROGRESS: { label: "In Progress", cls: "text-[#00008B] text-xs font-semibold" },
-        PENDING: { label: "To Do", cls: "text-gray-400 text-xs font-medium" },
-    };
-    const stat = statusMap[task.status];
     const pts = task.pts ?? (task.weight === "HARD" ? 3 : task.weight === "MEDIUM" ? 2 : 1);
 
     return (
@@ -659,9 +653,6 @@ function TaskRow({
                 ) : (
                     <span className="text-xs text-gray-400">-</span>
                 )}
-            </td>
-            <td className="px-4 py-4">
-                <span className={stat.cls}>{stat.label}</span>
             </td>
             <td className="px-4 py-4 text-sm text-gray-500">
                 {task.assignedTo ? (
@@ -1204,7 +1195,6 @@ function RouteComponent() {
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Difficulty</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Pts</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider w-36">Progress</th>
-                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Assigned To</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Evidence</th>
                                 {isLeader && (
@@ -1215,7 +1205,7 @@ function RouteComponent() {
                         <tbody className="divide-y divide-gray-50">
                             {tasks.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-10 text-center text-sm text-gray-400 italic">
+                                    <td colSpan={isLeader ? 7 : 6} className="px-6 py-10 text-center text-sm text-gray-400 italic">
                                         No tasks yet. Add one to get started.
                                     </td>
                                 </tr>

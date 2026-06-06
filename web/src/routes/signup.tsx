@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState, useEffect } from "react";
-import { AlertCircle, UserPlus, X, CheckCircle2 } from "lucide-react";
+import { AlertCircle, UserPlus, X, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { authApi } from "../utils/api";
 
@@ -14,6 +14,8 @@ function RouteComponent() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [role, setRole] = useState<"student" | "lecturer">("student");
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [emailStatus, setEmailStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
@@ -274,15 +276,29 @@ function RouteComponent() {
 
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-medium text-slate-700">Password</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => { setPassword(e.target.value); clearError("password"); clearError("confirmPassword"); }}
-                                placeholder="At least 4 characters"
-                                className={`rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
-                                    errors.password ? "border-red-500 bg-red-50/30 focus:ring-red-100" : "border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
-                                }`}
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => { setPassword(e.target.value); clearError("password"); clearError("confirmPassword"); }}
+                                    placeholder="At least 4 characters"
+                                    className={`w-full rounded-lg border bg-white px-4 py-2.5 pr-10 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
+                                        errors.password ? "border-red-500 bg-red-50/30 focus:ring-red-100" : "border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                                    }`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
                             {errors.password && (
                                 <p className="text-[10px] text-red-600 font-bold uppercase tracking-wide flex items-center gap-1 mt-0.5">
                                     <AlertCircle className="h-2.5 w-2.5" />
@@ -293,15 +309,29 @@ function RouteComponent() {
 
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-medium text-slate-700">Confirm password</label>
-                            <input
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => { setConfirmPassword(e.target.value); clearError("confirmPassword"); }}
-                                placeholder="Repeat your password"
-                                className={`rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
-                                    errors.confirmPassword ? "border-red-500 bg-red-50/30 focus:ring-red-100" : "border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
-                                }`}
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    value={confirmPassword}
+                                    onChange={(e) => { setConfirmPassword(e.target.value); clearError("confirmPassword"); }}
+                                    placeholder="Repeat your password"
+                                    className={`w-full rounded-lg border bg-white px-4 py-2.5 pr-10 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all ${
+                                        errors.confirmPassword ? "border-red-500 bg-red-50/30 focus:ring-red-100" : "border-slate-200 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+                                    }`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                    tabIndex={-1}
+                                >
+                                    {showConfirmPassword ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
                             {errors.confirmPassword && (
                                 <p className="text-[10px] text-red-600 font-bold uppercase tracking-wide flex items-center gap-1 mt-0.5">
                                     <AlertCircle className="h-2.5 w-2.5" />

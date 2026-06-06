@@ -315,17 +315,13 @@ function RootDocument({ children }: { children: ReactNode }) {
                                 </button>
                             </div>
 
-                            <header className="topbar lg:hidden sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
+                            <header className="topbar lg:hidden sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100">
                                 <button
                                     onClick={() => setSidebarOpen(!sidebarOpen)}
                                     className="button button--ghost button--compact lg:hidden"
                                     aria-label="Toggle sidebar"
                                 >
-                                    {sidebarOpen ? (
-                                        <X className="h-5 w-5" />
-                                    ) : (
-                                        <Menu className="h-5 w-5" />
-                                    )}
+                                    <Menu className="h-5 w-5" />
                                 </button>
                                 <div className="ml-3 font-bold text-slate-900">Spled</div>
                             </header>
