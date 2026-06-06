@@ -18,11 +18,9 @@ function AuthCallback() {
     const { token, userId } = search;
 
     if (token && userId) {
-      // Save basic info first
       localStorage.setItem('token', token);
       localStorage.setItem('userId', userId);
 
-      // Fetch full profile info securely
       const fetchProfile = async () => {
         try {
           const response = await authApi.get('/auth/me', {

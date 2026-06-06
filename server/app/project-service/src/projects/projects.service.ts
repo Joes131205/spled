@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { createProjectDto } from '../utils/dto/createProjectDto';
 import { prisma } from '../db/prisma.client';
@@ -170,6 +171,7 @@ export class ProjectsService {
   ) {
     const project = await db.project.findUnique({
       where: { id: projectId },
+      include: { members: true },
     });
     if (!project) {
       throw new NotFoundException('Project not found');
@@ -179,6 +181,26 @@ export class ProjectsService {
       throw new ForbiddenException(
         'Only the project leader can invite members',
       );
+    }
+
+    // Check if the user is currently an active member of the project
+    // Note: We need to get the user ID for this email from the auth service conceptually,
+    // but the DB schema might just use email for invitations until they accept.
+    // However, since `handleInviteEmailChange` on the frontend checks if the user is registered,
+    // we assume the email maps to a user. For safety, we rely on the frontend check or 
+    // we'd need to fetch the userId by email. Since we don't have direct access to auth service here,
+    // we'll primarily check for existing pending invitations.
+
+    const existingInvitation = await db.invitation.findFirst({
+      where: {
+        projectId,
+        email: body.email,
+        status: 'PENDING'
+      }
+    });
+
+    if (existingInvitation) {
+        throw new ConflictException('User already has a pending invitation to this project');
     }
 
     const invitation = await db.invitation.create({

@@ -861,15 +861,14 @@ function RouteComponent() {
         const emailRegex = /^\S+@\S+\.\S+$/;
 
         if (!emailRegex.test(email)) {
-            // Only show format error if they've started typing something that looks like an email or it's long
             if (email.includes("@") || email.length > 5) {
                 setInviteError("Please enter a valid email address (e.g. user@example.com)");
             }
             return;
         }
 
-        if (project?.invitations.some(inv => inv.email.toLowerCase() === email.toLowerCase())) {
-            setInviteError("This user has already been invited");
+        if (project?.invitations.some(inv => inv.email.toLowerCase() === email.toLowerCase() && inv.status === 'PENDING')) {
+            setInviteError("This user already has a pending invitation");
             return;
         }
 
