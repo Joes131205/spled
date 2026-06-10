@@ -803,6 +803,8 @@ function RouteComponent() {
         reason: "",
     });
 
+    const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+
     useEffect(() => {
         setIsMounted(true);
     }, []);
@@ -979,8 +981,7 @@ function RouteComponent() {
     });
 
     const handleLeaveProject = () => {
-        if (!confirm("Are you sure you want to leave this project?")) return;
-        leaveProjectMutation.mutate();
+        setLeaveModalOpen(true);
     };
 
     if (isLoading) {
@@ -1459,6 +1460,55 @@ function RouteComponent() {
                                         {kickMemberMutation.isPending ? "Removing..." : "Confirm Kick"}
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {leaveModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden relative">
+                        <button
+                            type="button"
+                            onClick={() => setLeaveModalOpen(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+
+                        <div className="px-6 py-5 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-900">Leave Project?</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Are you sure you want to leave <span className="font-bold text-gray-900">"{project.name}"</span>?
+                            </p>
+                        </div>
+
+                        <div className="p-6">
+                            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                                You will lose access to all project data and tasks. This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setLeaveModalOpen(false)}
+                                    className="flex-1 py-2.5 border border-gray-200 text-gray-600 text-sm font-bold rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Stay here
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => leaveProjectMutation.mutate()}
+                                    disabled={leaveProjectMutation.isPending}
+                                    className="flex-[2] py-2.5 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {leaveProjectMutation.isPending ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <LogOut className="h-4 w-4" />
+                                    )}
+                                    {leaveProjectMutation.isPending ? "Leaving..." : "Confirm Leave"}
+                                </button>
                             </div>
                         </div>
                     </div>

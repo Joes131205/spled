@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { Calendar, MoreVertical, Plus, Trash2, Edit2, LogOut, Users, Loader2, Mail, AlertCircle, X, Bell } from "lucide-react";
+import { Calendar, MoreVertical, Plus, Trash2, Edit2, LogOut, Users, Loader2, Mail, AlertCircle, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectApi, ghostBusterApi } from "../../utils/api";
 
@@ -134,6 +134,8 @@ function RouteComponent() {
         projectId: null,
         projectName: null,
     });
+
+    const [alertExpanded, setAlertExpanded] = useState(false);
 
     const { data: projects = [], isLoading } = useQuery<Project[]>({
         queryKey: ["projects"],
@@ -372,56 +374,98 @@ function RouteComponent() {
             )}
 
             {globalWarnings.length > 0 && (
-                <div className="flex flex-col gap-2">
-                    {globalWarnings.map((warning, i) => (
-                        <div 
-                            key={`${warning.projectId}-${i}`}
-                            className={`rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border shadow-sm animate-in fade-in slide-in-from-top-4 ${
-                                warning.type === 'H-3' ? 'bg-yellow-50 border-yellow-200' :
-                                warning.type === 'H-2' ? 'bg-orange-50 border-orange-200' :
-                                'bg-red-50 border-red-200 animate-pulse'
-                            }`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center shadow-sm ${
-                                    warning.type === 'H-3' ? 'bg-yellow-500 text-white' :
-                                    warning.type === 'H-2' ? 'bg-orange-500 text-white' :
-                                    'bg-red-600 text-white'
-                                }`}>
-                                    <Bell className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <p className={`text-sm font-bold ${
-                                        warning.type === 'H-3' ? 'text-yellow-900' :
-                                        warning.type === 'H-2' ? 'text-orange-900' :
-                                        'text-red-900'
-                                    }`}>
-                                        Action Required in "{warning.projectName}"
-                                    </p>
-                                    <p className={`text-xs ${
-                                        warning.type === 'H-3' ? 'text-yellow-700' :
-                                        warning.type === 'H-2' ? 'text-orange-700' :
-                                        'text-red-700'
-                                    }`}>
-                                        {warning.type === 'OVERDUE' ? 'The project deadline has passed! Complete your pending tasks immediately.' :
-                                         warning.type === 'H-1' ? 'The deadline is Tomorrow! Complete your pending tasks NOW.' :
-                                         `The deadline is approaching (${warning.type}). Please update your pending tasks.`}
-                                    </p>
-                                </div>
+                <div className={`rounded-2xl border shadow-sm overflow-hidden animate-in fade-in slide-in-from-top-4 ${
+                    globalWarnings.some(w => w.type === 'H-1' || w.type === 'OVERDUE')
+                        ? 'bg-red-50 border-red-200'
+                        : globalWarnings.some(w => w.type === 'H-2')
+                        ? 'bg-orange-50 border-orange-200'
+                        : 'bg-yellow-50 border-yellow-200'
+                }`}>
+                    {/* Summary header — always visible */}
+                    <button
+                        type="button"
+                        onClick={() => setAlertExpanded(v => !v)}
+                        className="w-full flex items-center justify-between gap-4 p-4 text-left"
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center shadow-sm ${
+                                globalWarnings.some(w => w.type === 'H-1' || w.type === 'OVERDUE')
+                                    ? 'bg-red-600 text-white'
+                                    : globalWarnings.some(w => w.type === 'H-2')
+                                    ? 'bg-orange-500 text-white'
+                                    : 'bg-yellow-500 text-white'
+                            }`}>
+                                <AlertCircle className="h-5 w-5" />
                             </div>
-                            <Link
-                                to="/dashboard/project/$projectId"
-                                params={{ projectId: warning.projectId }}
-                                className={`text-xs font-bold px-4 py-2 rounded-lg shadow-sm border transition-all hover:shadow-md bg-white shrink-0 w-full sm:w-auto text-center ${
-                                    warning.type === 'H-3' ? 'text-yellow-700 border-yellow-100 hover:text-yellow-800' :
-                                    warning.type === 'H-2' ? 'text-orange-700 border-orange-100 hover:text-orange-800' :
-                                    'text-red-700 border-red-100 hover:text-red-800'
-                                }`}
-                            >
-                                Go to Project
-                            </Link>
+                            <div>
+                                <p className={`text-sm font-bold ${
+                                    globalWarnings.some(w => w.type === 'H-1' || w.type === 'OVERDUE') ? 'text-red-900' :
+                                    globalWarnings.some(w => w.type === 'H-2') ? 'text-orange-900' : 'text-yellow-900'
+                                }`}>
+                                    Actions Required — {globalWarnings.length} project{globalWarnings.length > 1 ? 's' : ''} need{globalWarnings.length === 1 ? 's' : ''} your attention
+                                </p>
+                                <p className={`text-xs ${
+                                    globalWarnings.some(w => w.type === 'H-1' || w.type === 'OVERDUE') ? 'text-red-600' :
+                                    globalWarnings.some(w => w.type === 'H-2') ? 'text-orange-600' : 'text-yellow-700'
+                                }`}>
+                                    You have unfinished tasks with approaching deadlines.
+                                </p>
+                            </div>
                         </div>
-                    ))}
+                        <span className={`text-xs font-bold px-3 py-1.5 rounded-lg border bg-white shrink-0 transition-all ${
+                            globalWarnings.some(w => w.type === 'H-1' || w.type === 'OVERDUE') ? 'text-red-700 border-red-100' :
+                            globalWarnings.some(w => w.type === 'H-2') ? 'text-orange-700 border-orange-100' : 'text-yellow-700 border-yellow-100'
+                        }`}>
+                            {alertExpanded ? 'Hide ▲' : 'Show ▼'}
+                        </span>
+                    </button>
+
+                    {/* Expandable project list */}
+                    {alertExpanded && (
+                        <div className="border-t border-inherit divide-y divide-inherit">
+                            {globalWarnings.map((warning, i) => (
+                                <div
+                                    key={`${warning.projectId}-${i}`}
+                                    className="flex items-center justify-between gap-4 px-4 py-3"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className={`shrink-0 h-2 w-2 rounded-full ${
+                                            warning.type === 'H-3' ? 'bg-yellow-500' :
+                                            warning.type === 'H-2' ? 'bg-orange-500' :
+                                            'bg-red-600'
+                                        }`} />
+                                        <div className="min-w-0">
+                                            <p className={`text-sm font-semibold truncate ${
+                                                warning.type === 'H-3' ? 'text-yellow-900' :
+                                                warning.type === 'H-2' ? 'text-orange-900' : 'text-red-900'
+                                            }`}>
+                                                {warning.projectName}
+                                            </p>
+                                            <p className={`text-xs ${
+                                                warning.type === 'H-3' ? 'text-yellow-700' :
+                                                warning.type === 'H-2' ? 'text-orange-700' : 'text-red-700'
+                                            }`}>
+                                                {warning.type === 'OVERDUE' ? 'Deadline passed — complete tasks immediately' :
+                                                 warning.type === 'H-1' ? 'Due tomorrow — update your tasks now' :
+                                                 `Deadline in ${warning.type === 'H-2' ? '2' : '3'} days — update your tasks`}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Link
+                                        to="/dashboard/project/$projectId"
+                                        params={{ projectId: warning.projectId }}
+                                        className={`text-xs font-bold px-3 py-1.5 rounded-lg border bg-white shrink-0 transition-all hover:shadow-sm ${
+                                            warning.type === 'H-3' ? 'text-yellow-700 border-yellow-100 hover:text-yellow-800' :
+                                            warning.type === 'H-2' ? 'text-orange-700 border-orange-100 hover:text-orange-800' :
+                                            'text-red-700 border-red-100 hover:text-red-800'
+                                        }`}
+                                    >
+                                        Go →
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
