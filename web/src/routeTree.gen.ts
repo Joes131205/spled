@@ -9,7 +9,9 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthCallbackRouteImport } from './routes/auth-callback'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardTaskCreateNewRouteImport } from './routes/dashboard/task/create-new'
@@ -18,11 +20,24 @@ import { Route as DashboardProjectEditRouteImport } from './routes/dashboard/pro
 import { Route as DashboardProjectCreateRouteImport } from './routes/dashboard/project/create'
 import { Route as DashboardProjectProjectIdRouteImport } from './routes/dashboard/project/$projectId'
 import { Route as DashboardProfileEditRouteImport } from './routes/dashboard/profile/edit'
+import { Route as DashboardProfileDisplayRouteImport } from './routes/dashboard/profile/display'
+import { Route as DashboardInvitationsPendingRouteImport } from './routes/dashboard/invitations/pending'
+import { Route as DashboardTaskTaskIdEditRouteImport } from './routes/dashboard/task/$taskId.edit'
 import { Route as DashboardProjectProjectIdEditRouteImport } from './routes/dashboard/project/$projectId.edit'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth-callback',
+  path: '/auth-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -66,6 +81,22 @@ const DashboardProfileEditRoute = DashboardProfileEditRouteImport.update({
   path: '/dashboard/profile/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardProfileDisplayRoute = DashboardProfileDisplayRouteImport.update({
+  id: '/dashboard/profile/display',
+  path: '/dashboard/profile/display',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardInvitationsPendingRoute =
+  DashboardInvitationsPendingRouteImport.update({
+    id: '/dashboard/invitations/pending',
+    path: '/dashboard/invitations/pending',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DashboardTaskTaskIdEditRoute = DashboardTaskTaskIdEditRouteImport.update({
+  id: '/dashboard/task/$taskId/edit',
+  path: '/dashboard/task/$taskId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardProjectProjectIdEditRoute =
   DashboardProjectProjectIdEditRouteImport.update({
     id: '/edit',
@@ -75,8 +106,12 @@ const DashboardProjectProjectIdEditRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth-callback': typeof AuthCallbackRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/invitations/pending': typeof DashboardInvitationsPendingRoute
+  '/dashboard/profile/display': typeof DashboardProfileDisplayRoute
   '/dashboard/profile/edit': typeof DashboardProfileEditRoute
   '/dashboard/project/$projectId': typeof DashboardProjectProjectIdRouteWithChildren
   '/dashboard/project/create': typeof DashboardProjectCreateRoute
@@ -84,11 +119,16 @@ export interface FileRoutesByFullPath {
   '/dashboard/task/create': typeof DashboardTaskCreateRoute
   '/dashboard/task/create-new': typeof DashboardTaskCreateNewRoute
   '/dashboard/project/$projectId/edit': typeof DashboardProjectProjectIdEditRoute
+  '/dashboard/task/$taskId/edit': typeof DashboardTaskTaskIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth-callback': typeof AuthCallbackRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/invitations/pending': typeof DashboardInvitationsPendingRoute
+  '/dashboard/profile/display': typeof DashboardProfileDisplayRoute
   '/dashboard/profile/edit': typeof DashboardProfileEditRoute
   '/dashboard/project/$projectId': typeof DashboardProjectProjectIdRouteWithChildren
   '/dashboard/project/create': typeof DashboardProjectCreateRoute
@@ -96,12 +136,17 @@ export interface FileRoutesByTo {
   '/dashboard/task/create': typeof DashboardTaskCreateRoute
   '/dashboard/task/create-new': typeof DashboardTaskCreateNewRoute
   '/dashboard/project/$projectId/edit': typeof DashboardProjectProjectIdEditRoute
+  '/dashboard/task/$taskId/edit': typeof DashboardTaskTaskIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth-callback': typeof AuthCallbackRoute
   '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/invitations/pending': typeof DashboardInvitationsPendingRoute
+  '/dashboard/profile/display': typeof DashboardProfileDisplayRoute
   '/dashboard/profile/edit': typeof DashboardProfileEditRoute
   '/dashboard/project/$projectId': typeof DashboardProjectProjectIdRouteWithChildren
   '/dashboard/project/create': typeof DashboardProjectCreateRoute
@@ -109,13 +154,18 @@ export interface FileRoutesById {
   '/dashboard/task/create': typeof DashboardTaskCreateRoute
   '/dashboard/task/create-new': typeof DashboardTaskCreateNewRoute
   '/dashboard/project/$projectId/edit': typeof DashboardProjectProjectIdEditRoute
+  '/dashboard/task/$taskId/edit': typeof DashboardTaskTaskIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth-callback'
     | '/login'
+    | '/signup'
     | '/dashboard/'
+    | '/dashboard/invitations/pending'
+    | '/dashboard/profile/display'
     | '/dashboard/profile/edit'
     | '/dashboard/project/$projectId'
     | '/dashboard/project/create'
@@ -123,11 +173,16 @@ export interface FileRouteTypes {
     | '/dashboard/task/create'
     | '/dashboard/task/create-new'
     | '/dashboard/project/$projectId/edit'
+    | '/dashboard/task/$taskId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth-callback'
     | '/login'
+    | '/signup'
     | '/dashboard'
+    | '/dashboard/invitations/pending'
+    | '/dashboard/profile/display'
     | '/dashboard/profile/edit'
     | '/dashboard/project/$projectId'
     | '/dashboard/project/create'
@@ -135,11 +190,16 @@ export interface FileRouteTypes {
     | '/dashboard/task/create'
     | '/dashboard/task/create-new'
     | '/dashboard/project/$projectId/edit'
+    | '/dashboard/task/$taskId/edit'
   id:
     | '__root__'
     | '/'
+    | '/auth-callback'
     | '/login'
+    | '/signup'
     | '/dashboard/'
+    | '/dashboard/invitations/pending'
+    | '/dashboard/profile/display'
     | '/dashboard/profile/edit'
     | '/dashboard/project/$projectId'
     | '/dashboard/project/create'
@@ -147,27 +207,47 @@ export interface FileRouteTypes {
     | '/dashboard/task/create'
     | '/dashboard/task/create-new'
     | '/dashboard/project/$projectId/edit'
+    | '/dashboard/task/$taskId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardInvitationsPendingRoute: typeof DashboardInvitationsPendingRoute
+  DashboardProfileDisplayRoute: typeof DashboardProfileDisplayRoute
   DashboardProfileEditRoute: typeof DashboardProfileEditRoute
   DashboardProjectProjectIdRoute: typeof DashboardProjectProjectIdRouteWithChildren
   DashboardProjectCreateRoute: typeof DashboardProjectCreateRoute
   DashboardProjectEditRoute: typeof DashboardProjectEditRoute
   DashboardTaskCreateRoute: typeof DashboardTaskCreateRoute
   DashboardTaskCreateNewRoute: typeof DashboardTaskCreateNewRoute
+  DashboardTaskTaskIdEditRoute: typeof DashboardTaskTaskIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth-callback': {
+      id: '/auth-callback'
+      path: '/auth-callback'
+      fullPath: '/auth-callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -226,6 +306,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardProfileEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/profile/display': {
+      id: '/dashboard/profile/display'
+      path: '/dashboard/profile/display'
+      fullPath: '/dashboard/profile/display'
+      preLoaderRoute: typeof DashboardProfileDisplayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/invitations/pending': {
+      id: '/dashboard/invitations/pending'
+      path: '/dashboard/invitations/pending'
+      fullPath: '/dashboard/invitations/pending'
+      preLoaderRoute: typeof DashboardInvitationsPendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/task/$taskId/edit': {
+      id: '/dashboard/task/$taskId/edit'
+      path: '/dashboard/task/$taskId/edit'
+      fullPath: '/dashboard/task/$taskId/edit'
+      preLoaderRoute: typeof DashboardTaskTaskIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard/project/$projectId/edit': {
       id: '/dashboard/project/$projectId/edit'
       path: '/edit'
@@ -252,14 +353,19 @@ const DashboardProjectProjectIdRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardInvitationsPendingRoute: DashboardInvitationsPendingRoute,
+  DashboardProfileDisplayRoute: DashboardProfileDisplayRoute,
   DashboardProfileEditRoute: DashboardProfileEditRoute,
   DashboardProjectProjectIdRoute: DashboardProjectProjectIdRouteWithChildren,
   DashboardProjectCreateRoute: DashboardProjectCreateRoute,
   DashboardProjectEditRoute: DashboardProjectEditRoute,
   DashboardTaskCreateRoute: DashboardTaskCreateRoute,
   DashboardTaskCreateNewRoute: DashboardTaskCreateNewRoute,
+  DashboardTaskTaskIdEditRoute: DashboardTaskTaskIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

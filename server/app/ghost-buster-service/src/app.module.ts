@@ -9,7 +9,7 @@ import { JwtStrategy } from './utils/strategy/jwt.strategy';
     GhostBusterModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'jwt-secret',
+      secret: process.env.JWT_SECRET ?? 'super-secret-perfectionist-key',
       signOptions: { expiresIn: '7d' },
     }),
   ],

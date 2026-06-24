@@ -15,6 +15,7 @@ export class EvidencesService {
     body: CreateEvidenceDto,
     uploadedBy: string,
   ) {
+    console.log('[EvidenceService] uploadEvidence request:', { taskId, body, uploadedBy });
     if (!taskId) {
       throw new BadRequestException('Missing task id!');
     }

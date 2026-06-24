@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export enum TaskStatus {
   PENDING = 'PENDING',
@@ -12,6 +20,13 @@ export class updateStatusDto {
   @IsEnum(TaskStatus)
   @IsNotEmpty()
   status!: TaskStatus;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  progress?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()

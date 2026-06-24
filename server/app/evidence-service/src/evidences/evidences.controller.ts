@@ -41,14 +41,14 @@ export class EvidencesController {
 
   @Get('evidence/:taskId')
   @ApiOperation({ summary: 'Get evidence by task id' })
-  @Roles('LEADER', 'MEMBER')
+  @Roles('LEADER', 'MEMBER', 'LECTURER')
   getEvidenceByTask(@Param('taskId') taskId: string) {
     return this.evidencesService.getEvidenceByTask(taskId);
   }
 
   @Put('evidence/:evidenceId/verify')
-  @ApiOperation({ summary: 'Verify evidence as project leader' })
-  @Roles('LEADER')
+  @ApiOperation({ summary: 'Verify evidence as project leader or peer member' })
+  @Roles('LEADER', 'MEMBER')
   verifyEvidence(
     @Param('evidenceId') evidenceId: string,
     @Body() verifyEvidence: VerifyEvidenceDto,

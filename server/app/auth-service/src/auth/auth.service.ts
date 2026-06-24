@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -15,7 +16,7 @@ const db = prisma;
 export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
 
-  private sanitizeUser<T extends { password: string }>(user: T) {
+  private sanitizeUser<T extends { password?: string | null }>(user: T) {
     const { password, ...safeUser } = user;
     void password;
     return safeUser;
@@ -35,14 +36,17 @@ export class AuthService {
     const password = await bcrypt.hash(body.password, 10);
     const user = await db.user.create({
       data: {
-        ...body,
+        username: body.username,
+        email: body.email,
         password,
+        role: body.role as any,
       },
     });
 
     const accessToken = await this.jwtService.signAsync({
       sub: user.id,
       role: user.role,
+      email: user.email,
     });
 
     return {
@@ -60,6 +64,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'This account is registered with Google. Please use Google Sign-In.',
+      );
+    }
+
     const validPassword = await bcrypt.compare(body.password, user.password);
 
     if (!validPassword) {
@@ -69,6 +79,7 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync({
       sub: user.id,
       role: user.role,
+      email: user.email,
     });
 
     return {
@@ -87,5 +98,78 @@ export class AuthService {
     }
 
     return this.sanitizeUser(user);
+  }
+
+  async getUserById(userId: string) {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.sanitizeUser(user);
+  }
+
+  async checkEmail(email: string) {
+    const user = await db.user.findUnique({
+      where: { email },
+    });
+    return { 
+      exists: !!user,
+      id: user?.id,
+      role: user?.role
+    };
+  }
+
+  private cleanString(val: any): string | null {
+    if (!val || val === 'undefined' || val === 'null') return null;
+    return String(val);
+  }
+
+  async validateGoogleUser(googleUser: any) {
+    const { email, googleId, firstName, lastName, picture } = googleUser;
+    
+    let user = await db.user.findUnique({
+      where: { email },
+    });
+
+    const googleDisplayName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
+    const googleAvatar = this.cleanString(picture);
+
+    if (user) {
+      const currentDisplayName = this.cleanString(user.displayName);
+      const currentAvatar = this.cleanString(user.avatarUrl);
+
+      user = await db.user.update({
+        where: { email },
+        data: { 
+          googleId: user.googleId || googleId, 
+          avatarUrl: currentAvatar || googleAvatar,
+          displayName: currentDisplayName || googleDisplayName
+        },
+      });
+    } else {
+      user = await db.user.create({
+        data: {
+          email,
+          googleId,
+          username: email.split('@')[0] + '_' + Math.floor(Math.random() * 1000),
+          displayName: googleDisplayName,
+          avatarUrl: googleAvatar,
+          role: 'MEMBER',
+        },
+      });
+    }
+
+    const accessToken = await this.jwtService.signAsync({
+      sub: user.id,
+      role: user.role,
+      email: user.email,
+    });
+
+    return {
+      user: this.sanitizeUser(user),
+      accessToken,
+    };
   }
 }

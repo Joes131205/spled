@@ -1,12 +1,38 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap");
 @import "tailwindcss";
+
+@theme {
+    --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-serif: "DM Serif Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
 
 @layer base {
     html {
         @apply bg-slate-50 text-slate-900;
+        font-family: var(--font-sans);
+        font-size: 80%;
     }
 
     body {
         @apply min-h-screen bg-slate-50 text-slate-900 antialiased;
+        font-family: var(--font-sans);
+    }
+
+    button, 
+    a, 
+    select, 
+    label,
+    [role="button"],
+    input[type="button"],
+    input[type="submit"],
+    input[type="range"],
+    input[type="file"]::file-selector-button {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    input:disabled {
+        cursor: not-allowed;
     }
 }
 
@@ -20,11 +46,39 @@
     }
 
     .app-sidebar {
-        @apply fixed inset-y-0 left-0 z-40 w-72 border-r border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-950/10 backdrop-blur transition-transform duration-300 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:translate-x-0;
+        @apply fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-slate-200 bg-white/95 px-6 py-8 shadow-xl shadow-slate-950/10 backdrop-blur transition-transform duration-300 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:translate-x-0;
     }
 
     .app-sidebar__brand {
-        @apply mb-8 flex items-center gap-3;
+        @apply mb-6 flex items-center gap-3 border-b border-slate-200 pb-6;
+    }
+
+    .app-sidebar__footer {
+        @apply mt-auto border-t border-slate-200 pt-6;
+    }
+
+    .sidebar-user {
+        @apply flex items-center gap-3 px-2;
+    }
+
+    .sidebar-user__avatar {
+        @apply h-10 w-10 shrink-0 overflow-hidden rounded-full bg-slate-100 border border-slate-200;
+    }
+
+    .sidebar-user__info {
+        @apply min-w-0 flex-1;
+    }
+
+    .sidebar-user__name {
+        @apply truncate text-sm font-semibold text-slate-900;
+    }
+
+    .sidebar-user__email {
+        @apply truncate text-xs text-slate-500;
+    }
+
+    .sidebar-user__logout {
+        @apply flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none;
     }
 
     .content-shell {
@@ -72,7 +126,7 @@
     }
 
     .kicker {
-        @apply text-xs font-semibold uppercase tracking-[0.24em] text-cyan-600;
+        @apply text-xs font-semibold uppercase tracking-[0.24em] text-indigo-700;
     }
 
     .surface {
@@ -139,6 +193,10 @@
         @apply space-y-2;
     }
 
+    .nav-section-title {
+        @apply px-4 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 mt-6 mb-2 first:mt-0;
+    }
+
     .nav-link {
         @apply flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950;
     }
@@ -156,15 +214,15 @@
     }
 
     .project-card__title {
-        @apply text-xl font-semibold tracking-tight text-slate-950;
+        @apply text-lg font-semibold tracking-tight text-slate-950;
     }
 
     .project-card__description {
-        @apply mt-4 text-sm leading-6 text-slate-600;
+        @apply mt-2 text-sm leading-6 text-slate-600;
     }
 
     .card-meta {
-        @apply mt-6 flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500;
+        @apply mt-4 flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500;
     }
 
     .split-actions {
@@ -176,11 +234,15 @@
     }
 
     .button--primary {
-        @apply bg-slate-900 text-white hover:bg-slate-800;
+        @apply bg-[#00008B] text-white hover:bg-[#000066];
     }
 
     .button--secondary {
         @apply border border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
+    }
+
+    .button--leave {
+        @apply bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-100;
     }
 
     .button--ghost {
@@ -214,7 +276,7 @@
     .input,
     .textarea,
     .select {
-        @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100;
+        @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100;
     }
 
     .textarea {
@@ -297,3 +359,96 @@
         @apply border-t border-slate-100;
     }
 }
+
+    /* === Dashboard page overrides === */
+
+    .page-header {
+        @apply flex flex-col gap-1 border-none bg-transparent shadow-none p-0;
+    }
+
+    .projects-toolbar {
+        @apply flex items-center justify-between gap-4;
+    }
+
+    .tab-group {
+        @apply flex items-center gap-2;
+    }
+
+    .tab {
+        @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-slate-500 transition hover:text-slate-900;
+    }
+
+    .tab--active {
+        @apply text-slate-900 font-semibold;
+    }
+
+    .tab-count {
+        @apply inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500;
+    }
+
+    .projects-divider {
+        @apply -mt-4 border-t border-slate-300;
+    }
+
+    /* Kebab menu */
+    .kebab-btn {
+        @apply flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition hover:border-slate-300 hover:text-slate-700 focus:outline-none;
+    }
+
+    .dropdown-menu {
+        @apply absolute right-0 top-9 z-50 min-w-[130px] rounded-2xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-900/10;
+    }
+
+    .dropdown-item {
+        @apply flex w-full items-center gap-2.5 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50;
+    }
+
+    .dropdown-item--danger {
+        @apply text-rose-600 hover:bg-rose-50;
+    }
+
+    .dropdown-item--leave {
+        @apply text-rose-600 hover:bg-rose-50;
+    }
+
+    /* Role row */
+    .card-role-row {
+        @apply mt-3 flex items-center gap-2;
+    }
+
+    .role-label {
+        @apply text-xs text-slate-500;
+    }
+
+    .role-badge {
+        @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest;
+    }
+
+    .role-badge--leader {
+        @apply border-slate-300 bg-slate-100 text-slate-700;
+    }
+
+    .role-badge--member {
+        @apply border-slate-300 bg-slate-100 text-slate-700;
+    }
+
+    .leave-btn {
+        @apply ml-auto inline-flex items-center gap-1.5 rounded-full border border-rose-100 px-3 py-1 text-[10px] font-bold uppercase tracking-tight text-rose-600 transition hover:border-rose-200 hover:bg-rose-50;
+    }
+
+    /* Progress */
+    .progress-section {
+        @apply mt-4;
+    }
+
+    .progress-header {
+        @apply mb-1.5 flex items-center justify-between text-xs text-slate-500;
+    }
+
+    .progress-track {
+        @apply h-1.5 w-full overflow-hidden rounded-full bg-slate-100;
+    }
+
+    .progress-fill {
+        @apply h-full rounded-full bg-indigo-500 transition-all;
+    }

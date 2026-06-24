@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { AlertCircle, ArrowLeft, Loader2, Check, ChevronDown } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { projectApi, authApi } from "../../../utils/api";
 
 export const Route = createFileRoute("/dashboard/task/create")({
     component: RouteComponent,
@@ -9,23 +11,94 @@ export const Route = createFileRoute("/dashboard/task/create")({
     }),
 });
 
+function MemberOption({ userId, isSelected, onSelect }: { userId: string, isSelected: boolean, onSelect: () => void }) {
+    const { data: user } = useQuery({
+        queryKey: ["user", userId],
+        queryFn: async () => {
+            const response = await authApi.get(`/auth/users/${userId}`);
+            return response.data;
+        },
+    });
+
+    if (user?.role === "LECTURER") return null;
+
+    return (
+        <button
+            type="button"
+            onClick={onSelect}
+            className={`flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium transition-all ${
+                isSelected 
+                    ? "bg-slate-50 text-[#00008B]" 
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            }`}
+        >
+            <div className="flex items-center gap-2">
+                <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] border border-slate-200 uppercase">
+                    {user?.username?.substring(0, 2) || "??"}
+                </div>
+                <span>{user?.username || "Loading..."}</span>
+            </div>
+            {isSelected && <Check className="h-4 w-4" />}
+        </button>
+    );
+}
+
 function RouteComponent() {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [weight, setWeight] = useState("easy");
-    const [assignedUsername, setAssignedUsername] = useState("");
-    const [deadline, setDeadline] = useState("");
+    const [weight, setWeight] = useState("MEDIUM");
+    const [assignedTo, setAssignedTo] = useState("");
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    
+    const [weightMenuOpen, setWeightMenuOpen] = useState(false);
+    const [assignMenuOpen, setAssignMenuOpen] = useState(false);
+    
+    const weightRef = useRef<HTMLDivElement>(null);
+    const assignRef = useRef<HTMLDivElement>(null);
+
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { projectId } = Route.useSearch();
-    const role = localStorage.getItem("role");
 
     useEffect(() => {
-        if (role !== "LEADER") {
-            navigate({ to: "/dashboard" });
-        }
-    }, [navigate, role]);
+        const handler = (e: MouseEvent) => {
+            if (weightRef.current && !weightRef.current.contains(e.target as Node)) setWeightMenuOpen(false);
+            if (assignRef.current && !assignRef.current.contains(e.target as Node)) setAssignMenuOpen(false);
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
+
+    const { data: project, isLoading: isProjectLoading } = useQuery({
+        queryKey: ["projects", projectId],
+        queryFn: async () => {
+            const response = await projectApi.get(`/projects/${projectId}`);
+            return response.data;
+        },
+        enabled: !!projectId,
+    });
+
+    const { data: assignedUser } = useQuery({
+        queryKey: ["user", assignedTo],
+        queryFn: async () => {
+            const response = await authApi.get(`/auth/users/${assignedTo}`);
+            return response.data;
+        },
+        enabled: !!assignedTo,
+    });
+
+    const createTaskMutation = useMutation({
+        mutationFn: async (data: any) => {
+            await projectApi.post("/tasks", data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["projects", projectId] });
+            navigate({ to: "/dashboard/project/$projectId", params: { projectId } });
+        },
+        onError: (err: any) => {
+            setError(err.response?.data?.message || "Failed to create task");
+        },
+    });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,36 +112,36 @@ function RouteComponent() {
             setError("Task name must be at least 3 characters");
             return;
         }
-        if (!assignedUsername) {
-            setError("Please assign this task to a member");
+        if (name.length > 30) {
+            setError("Task name must be at most 30 characters");
             return;
         }
 
-        setLoading(true);
-        setTimeout(() => {
-            navigate({ to: `/dashboard/project/${projectId}` });
-        }, 300);
+        createTaskMutation.mutate({
+            projectId,
+            name,
+            description,
+            weight,
+            assignedTo: assignedTo || null,
+        });
     };
 
-    return (
-        <div className="grid gap-6">
-            <button
-                onClick={() =>
-                    navigate({
-                        to: "/dashboard/project/$projectId",
-                        params: { projectId },
-                    })
-                }
-                className="back-link w-fit"
-            >
-                <ArrowLeft className="h-5 w-5" />
-                Back to Project
-            </button>
+    const weights = [
+        { id: "EASY", label: "Easy", pts: 1, colorClass: "bg-emerald-500" },
+        { id: "MEDIUM", label: "Medium", pts: 2, colorClass: "bg-amber-500" },
+        { id: "HARD", label: "Hard", pts: 3, colorClass: "bg-rose-500" },
+    ];
 
-            <div className="surface">
-                <div className="surface__body max-w-2xl">
-                    <p className="kicker">Task</p>
-                    <h1 className="page-title">Create new task</h1>
+    const activeWeight = weights.find(w => w.id === weight) || weights[1];
+
+    const loading = createTaskMutation.isPending || isProjectLoading;
+
+    return (
+        <div className="flex min-h-[85vh] items-center justify-center p-6">
+            <div className="surface w-full max-w-4xl shadow-xl">
+                <div className="surface__body p-8 sm:p-10">
+                    <p className="kicker mb-1.5">Task</p>
+                    <h1 className="text-3xl font-bold text-slate-900">Create new task</h1>
                     <p className="page-subtitle mt-3">
                         Assign work to a teammate and keep the project moving.
                     </p>
@@ -86,85 +159,180 @@ function RouteComponent() {
                         noValidate
                     >
                         <div className="field">
-                            <label className="label">Task name *</label>
+                            <label className="label text-xs uppercase tracking-widest text-slate-500">Task name *</label>
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="e.g., Design login page"
-                                className="input"
+                                maxLength={30}
+                                className="input h-12"
+                                required
                             />
+                            <div className="flex justify-end">
+                                <span className={`text-[10px] font-bold mt-1 ${name.length === 30 ? 'text-rose-500' : 'text-slate-400'}`}>
+                                    {name.length}/30
+                                </span>
+                            </div>
                         </div>
 
                         <div className="field">
-                            <label className="label">
-                                Description{" "}
-                                <span className="muted text-xs font-normal">
-                                    (optional)
+                            <div className="flex items-center justify-between">
+                                <label className="label text-xs uppercase tracking-widest text-slate-500">
+                                    Short Description{" "}
+                                    <span className="muted text-[10px] font-normal">
+                                        (optional)
+                                    </span>
+                                </label>
+                                <span className={`text-[10px] font-bold ${description.length === 50 ? 'text-rose-500' : 'text-slate-400'}`}>
+                                    {description.length}/50
                                 </span>
-                            </label>
+                            </div>
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="What needs to be done?"
                                 rows={3}
-                                className="textarea"
+                                maxLength={50}
+                                className="textarea min-h-24"
                             />
                         </div>
 
-                        <div className="field">
-                            <label className="label">Assign to</label>
-                            <input
-                                type="text"
-                                value={assignedUsername}
-                                onChange={(e) =>
-                                    setAssignedUsername(e.target.value)
-                                }
-                                placeholder="Enter member's username"
-                                className="input"
-                            />
+                        <div className="field relative" ref={assignRef}>
+                            <label className="label text-xs uppercase tracking-widest text-slate-500">Assign to Member</label>
+                            <button
+                                type="button"
+                                onClick={() => setAssignMenuOpen(!assignMenuOpen)}
+                                className="flex h-12 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                            >
+                                <div className="flex items-center gap-2">
+                                    {assignedTo ? (
+                                        <>
+                                            <div className="h-6 w-6 rounded-full bg-[#00008B] flex items-center justify-center text-[10px] text-white uppercase font-bold">
+                                                {assignedUser?.username?.substring(0, 2) || "??"}
+                                            </div>
+                                            <span className="text-[#00008B]">{assignedUser?.username || "Loading..."}</span>
+                                        </>
+                                    ) : (
+                                        <span className="text-slate-400">Select member</span>
+                                    )}
+                                </div>
+                                <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${assignMenuOpen ? "rotate-180" : ""}`} />
+                            </button>
+
+                            {assignMenuOpen && (
+                                <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-900/10 animate-in fade-in zoom-in-95 duration-200">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setAssignedTo("");
+                                            setAssignMenuOpen(false);
+                                        }}
+                                        className={`flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium transition-all ${
+                                            assignedTo === "" 
+                                                ? "bg-slate-50 text-[#00008B]" 
+                                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                        }`}
+                                    >
+                                        <span>Unassigned</span>
+                                        {assignedTo === "" && <Check className="h-4 w-4" />}
+                                    </button>
+                                    <div className="h-px bg-slate-100 mx-2 my-1" />
+                                    <div className="max-h-48 overflow-y-auto">
+                                        {project?.members?.map((m: any) => (
+                                            <MemberOption 
+                                                key={m.userId} 
+                                                userId={m.userId} 
+                                                isSelected={assignedTo === m.userId} 
+                                                onSelect={() => {
+                                                    setAssignedTo(m.userId);
+                                                    setAssignMenuOpen(false);
+                                                }} 
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div className="field">
-                                <label className="label">
-                                    Deadline{" "}
-                                    <span className="muted text-xs font-normal">
-                                        (optional)
+                        <div className="field relative" ref={weightRef}>
+                            <label className="label text-xs uppercase tracking-widest text-slate-500">Task Difficulty</label>
+                            <button
+                                type="button"
+                                onClick={() => setWeightMenuOpen(!weightMenuOpen)}
+                                className="flex h-12 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`h-2.5 w-2.5 rounded-full ${activeWeight.colorClass}`} />
+                                    <span>{activeWeight.label}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-tight text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md" style={{ fontFamily: '"DM Sans", sans-serif' }}>
+                                        {activeWeight.pts} PTS
                                     </span>
-                                </label>
-                                <input
-                                    type="date"
-                                    value={deadline}
-                                    onChange={(e) =>
-                                        setDeadline(e.target.value)
-                                    }
-                                    min={new Date().toISOString().split("T")[0]}
-                                    className="input"
-                                />
-                            </div>
+                                    <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${weightMenuOpen ? "rotate-180" : ""}`} />
+                                </div>
+                            </button>
 
-                            <div className="field">
-                                <label className="label">Weight</label>
-                                <select
-                                    value={weight}
-                                    onChange={(e) => setWeight(e.target.value)}
-                                    className="select"
-                                >
-                                    <option value="easy">Easy</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="hard">Hard</option>
-                                </select>
-                            </div>
+                            {weightMenuOpen && (
+                                <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-900/10 animate-in fade-in zoom-in-95 duration-200">
+                                    {weights.map((w) => (
+                                        <button
+                                            key={w.id}
+                                            type="button"
+                                            onClick={() => {
+                                                setWeight(w.id);
+                                                setWeightMenuOpen(false);
+                                            }}
+                                            className={`flex w-full items-center justify-between px-4 py-3 text-sm font-medium transition-all ${
+                                                weight === w.id 
+                                                    ? "bg-slate-50 text-[#00008B]" 
+                                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`h-2.5 w-2.5 rounded-full ${w.colorClass}`} />
+                                                <span>{w.label}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className={`text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-md ${
+                                                    weight === w.id ? "bg-[#00008B] text-white" : "bg-slate-100 text-slate-400"
+                                                }`} style={{ fontFamily: '"DM Sans", sans-serif' }}>
+                                                    {w.pts} PTS
+                                                </span>
+                                                {weight === w.id && <Check className="h-4 w-4" />}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="button button--primary w-full"
-                        >
-                            {loading ? "Creating..." : "Create task"}
-                        </button>
+                        <div className="grid grid-cols-2 gap-3 mt-4">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="button button--primary h-12 text-sm font-bold shadow-lg shadow-indigo-100"
+                            >
+                                {createTaskMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    "Create task"
+                                )}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    navigate({
+                                        to: "/dashboard/project/$projectId",
+                                        params: { projectId },
+                                    })
+                                }
+                                className="button button--secondary h-12 text-sm font-bold"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>

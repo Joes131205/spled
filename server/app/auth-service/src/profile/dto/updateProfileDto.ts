@@ -16,4 +16,14 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   password?: string;
+
+  @ApiProperty({ required: false, example: 'John Doe' })
+  @IsOptional()
+  @IsString()
+  displayName?: string;
+
+  @ApiProperty({ required: false, example: 'https://example.com/avatar.png' })
+  @IsOptional()
+  @IsString()
+  avatarUrl?: string;
 }

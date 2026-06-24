@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { AlertCircle, ArrowLeft, Camera, Upload } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { authApi } from "../../../utils/api";
 
 export const Route = createFileRoute("/dashboard/profile/edit")({
     component: RouteComponent,
@@ -8,6 +10,7 @@ export const Route = createFileRoute("/dashboard/profile/edit")({
 
 function RouteComponent() {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const username = localStorage.getItem("username") || "";
@@ -22,8 +25,32 @@ function RouteComponent() {
     const [avatarPreview, setAvatarPreview] = useState(
         localStorage.getItem("avatarUrl") || "",
     );
-    const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
+
+    const updateProfileMutation = useMutation({
+        mutationFn: async (data: { displayName: string; avatarUrl: string }) => {
+            const response = await authApi.put("/profile", data);
+            return response.data;
+        },
+        onSuccess: (data) => {
+            localStorage.setItem("displayName", data.displayName || "");
+            localStorage.setItem("avatarUrl", data.avatarUrl || "");
+            window.dispatchEvent(new Event("storage"));
+
+            setMessage({
+                type: "success",
+                text: "Profile updated successfully.",
+            });
+
+            queryClient.invalidateQueries({ queryKey: ["me"] });
+        },
+        onError: (error: any) => {
+            setMessage({
+                type: "error",
+                text: error.response?.data?.message || "Failed to update profile.",
+            });
+        },
+    });
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -53,60 +80,33 @@ function RouteComponent() {
     };
 
     const handleSave = () => {
-        setSaving(true);
         setMessage({ type: "", text: "" });
-
-        setTimeout(() => {
-            localStorage.setItem("displayName", displayName || "");
-            localStorage.setItem("avatarUrl", avatarUrl || "");
-            window.dispatchEvent(new Event("storage"));
-
-            setMessage({
-                type: "success",
-                text: "Profile updated successfully.",
-            });
-            setSaving(false);
-        }, 300);
+        updateProfileMutation.mutate({
+            displayName: displayName || "",
+            avatarUrl: avatarUrl || "",
+        });
     };
 
-    return (
-        <div className="grid gap-6">
-            <button
-                onClick={() => navigate({ to: "/dashboard" })}
-                className="back-link w-fit"
-            >
-                <ArrowLeft className="h-5 w-5" />
-                Back to Dashboard
-            </button>
+    const saving = updateProfileMutation.isPending;
 
-            <div className="surface">
-                <div className="surface__header flex items-center justify-between gap-4">
+    return (
+        <div className="flex min-h-[85vh] items-center justify-center p-4 sm:p-6">
+            <div className="surface w-full max-w-4xl shadow-2xl">
+                <div className="surface__header flex items-center justify-between gap-4 p-6 sm:p-10 lg:p-12">
                     <div>
-                        <p className="kicker">Profile</p>
-                        <h1 className="text-3xl font-bold text-slate-900">
-                            Edit profile
+                        <p className="kicker mb-2 text-sm font-semibold">Profile</p>
+                        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
+                            Edit Profile
                         </h1>
-                        <p className="page-subtitle mt-2">
-                            Keep your name and avatar consistent across the
-                            workspace.
-                        </p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-sm font-semibold text-slate-900">
-                            {username}
-                        </p>
-                        <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                            {role.replace(/_/g, " ")}
-                        </p>
                     </div>
                 </div>
 
-                {true ? (
+                {false ? ( 
                     <div className="empty-state">Loading...</div>
                 ) : (
-                    <div className="surface__body grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
-                        <div className="grid justify-items-center gap-4">
-                            <div className="avatar-mark h-28 w-28 text-3xl shadow-lg">
+                    <div className="surface__body grid gap-8 sm:gap-12 p-6 sm:p-10 lg:p-12 lg:grid-cols-[300px_minmax(0,1fr)]">
+                        <div className="grid justify-items-center gap-6">
+                            <div className="avatar-mark h-40 w-40 text-5xl shadow-xl rounded-[2.5rem]">
                                 {avatarPreview ? (
                                     <img
                                         src={avatarPreview}
@@ -119,11 +119,11 @@ function RouteComponent() {
                                 )}
                             </div>
 
-                            <div className="grid gap-2 text-center">
-                                <p className="font-semibold text-slate-900">
+                            <div className="grid gap-3 text-center">
+                                <p className="text-2xl font-bold text-slate-900">
                                     {displayName || username}
                                 </p>
-                                <p className="text-sm text-slate-500">
+                                <p className="text-lg text-slate-500">
                                     @{username}
                                 </p>
                             </div>
@@ -131,7 +131,7 @@ function RouteComponent() {
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="button button--ghost w-full"
+                                className="button button--ghost w-full py-3"
                             >
                                 <Upload className="h-4 w-4" />
                                 Upload avatar
@@ -146,7 +146,7 @@ function RouteComponent() {
                             />
                         </div>
 
-                        <div className="grid gap-5">
+                        <div className="grid gap-8">
                             {message.text && (
                                 <div
                                     className={`alert ${message.type === "success" ? "alert--success" : "alert--error"}`}
@@ -159,14 +159,14 @@ function RouteComponent() {
                             )}
 
                             <div className="field">
-                                <label className="label">Username</label>
-                                <div className="input bg-slate-50 text-slate-500">
+                                <label className="label text-base">Username</label>
+                                <div className="input text-base py-4 px-6 bg-slate-50 text-slate-500">
                                     @{username}
                                 </div>
                             </div>
 
                             <div className="field">
-                                <label className="label">Display name</label>
+                                <label className="label text-base">Display name</label>
                                 <input
                                     type="text"
                                     value={displayName}
@@ -175,15 +175,15 @@ function RouteComponent() {
                                     }
                                     placeholder={username || "Your name"}
                                     maxLength={32}
-                                    className="input"
+                                    className="input text-base py-4 px-6"
                                 />
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-slate-500 mt-1">
                                     {displayName.length}/32
                                 </p>
                             </div>
 
                             <div className="field">
-                                <label className="label">Avatar URL</label>
+                                <label className="label text-base">Avatar URL</label>
                                 <input
                                     type="url"
                                     value={avatarUrl}
@@ -191,26 +191,26 @@ function RouteComponent() {
                                         handleAvatarUrlChange(e.target.value)
                                     }
                                     placeholder="https://..."
-                                    className="input"
+                                    className="input text-base py-4 px-6"
                                 />
                             </div>
 
-                            <div className="split-actions pt-2">
+                            <div className="split-actions pt-6">
                                 <button
                                     type="button"
                                     onClick={handleSave}
                                     disabled={saving}
-                                    className="button button--primary"
+                                    className="button button--primary px-8 py-4 text-base rounded-2xl"
                                 >
-                                    <Camera className="h-4 w-4" />
+                                    <Camera className="h-5 w-5" />
                                     {saving ? "Saving..." : "Save changes"}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        navigate({ to: "/dashboard" })
+                                        navigate({ to: "/dashboard/profile/display"})
                                     }
-                                    className="button button--secondary"
+                                    className="button button--secondary px-8 py-4 text-base rounded-2xl"
                                 >
                                     Cancel
                                 </button>

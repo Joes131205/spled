@@ -4,7 +4,25 @@ import {
   IsOptional,
   IsString,
   IsDateString,
+  IsArray,
+  IsEmail,
 } from 'class-validator';
+
+export class TeamMemberDto {
+  @ApiProperty({ example: 'Frontend' })
+  @IsString()
+  @IsNotEmpty()
+  task!: string;
+
+  @ApiProperty({ example: 'alex@example.com' })
+  @IsEmail()
+  email!: string;
+
+  @ApiProperty({ example: 'MEDIUM' })
+  @IsString()
+  @IsNotEmpty()
+  difficulty!: string;
+}
 
 export class createProjectDto {
   @ApiProperty({ example: 'New campus app' })
@@ -26,4 +44,9 @@ export class createProjectDto {
   @IsOptional()
   @IsDateString()
   endDate?: string;
+
+  @ApiProperty({ required: false, type: [TeamMemberDto] })
+  @IsOptional()
+  @IsArray()
+  teamMembers?: TeamMemberDto[];
 }

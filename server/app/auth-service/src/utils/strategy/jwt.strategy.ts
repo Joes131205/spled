@@ -5,6 +5,7 @@ import { Injectable } from '@nestjs/common';
 interface JwtPayload {
   sub: string;
   role?: string;
+  email?: string;
 }
 
 @Injectable()
@@ -13,10 +14,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET ?? 'jwt-secret',
+      secretOrKey: process.env.JWT_SECRET ?? 'super-secret-perfectionist-key',
     });
   }
   validate(payload: JwtPayload) {
-    return { userId: payload.sub, role: payload.role };
+    return { userId: payload.sub, role: payload.role, email: payload.email };
   }
 }
